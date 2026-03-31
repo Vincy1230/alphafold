@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Docker launch script for Alphafold docker image."""
+"""用于启动 AlphaFold Docker 镜像的脚本。"""
 
 import os
 import pathlib
@@ -26,103 +26,93 @@ import docker
 from docker import types
 
 
-flags.DEFINE_bool('use_gpu', True, 'Enable NVIDIA runtime to run with GPUs.')
+flags.DEFINE_bool('use_gpu', True, '启用 NVIDIA 运行时以使用 GPU。')
 flags.DEFINE_enum(
     'models_to_relax',
     'best',
     ['best', 'all', 'none'],
-    'The models to run the final relaxation step on. '
-    'If `all`, all models are relaxed, which may be time '
-    'consuming. If `best`, only the most confident model is '
-    'relaxed. If `none`, relaxation is not run. Turning off '
-    'relaxation might result in predictions with '
-    'distracting stereochemical violations but might help '
-    'in case you are having issues with the relaxation '
-    'stage.',
+    '指定哪些模型执行最终弛豫步骤。'
+    '如果为 `all`，则所有模型都会弛豫，可能比较耗时。'
+    '如果为 `best`，则只弛豫置信度最高的模型。'
+    '如果为 `none`，则不执行弛豫。关闭弛豫可能会导致预测结果中出现'
+    '较明显的立体化学违规，但在弛豫阶段出现问题时可能有帮助。',
 )
 flags.DEFINE_bool(
-    'enable_gpu_relax', True, 'Run relax on GPU if GPU is enabled.'
+    'enable_gpu_relax', True, '如果启用了 GPU，则在 GPU 上执行弛豫。'
 )
 flags.DEFINE_string(
     'gpu_devices',
     'all',
-    'Comma separated list of devices to pass to NVIDIA_VISIBLE_DEVICES.',
+    '传给 NVIDIA_VISIBLE_DEVICES 的设备列表，多个设备用逗号分隔。',
 )
 flags.DEFINE_list(
     'fasta_paths',
     None,
-    'Paths to FASTA files, each containing a prediction '
-    'target that will be folded one after another. If a FASTA file contains '
-    'multiple sequences, then it will be folded as a multimer. Paths should be '
-    'separated by commas. All FASTA paths must have a unique basename as the '
-    'basename is used to name the output directories for each prediction.',
+    'FASTA 文件路径列表，每个文件包含一个将依次进行预测的目标。'
+    '如果某个 FASTA 文件包含多条序列，则会按多聚体处理。路径之间请用逗号分隔。'
+    '所有 FASTA 路径的基础文件名必须唯一，因为它会用于命名各个预测的输出目录。',
 )
 flags.DEFINE_string(
     'output_dir',
     '/tmp/alphafold',
-    'Path to a directory that will store the results.',
+    '用于保存结果的目录路径。',
 )
 flags.DEFINE_string(
     'data_dir',
     None,
-    'Path to directory with supporting data: AlphaFold parameters and genetic '
-    'and template databases. Set to the target of download_all_databases.sh.',
+    '支持数据目录路径：包括 AlphaFold 参数以及遗传与模板数据库。'
+    '请将其设置为 download_all_databases.sh 的目标目录。',
 )
 flags.DEFINE_string(
-    'docker_image_name', 'alphafold', 'Name of the AlphaFold Docker image.'
+    'docker_image_name', 'alphafold', 'AlphaFold Docker 镜像名称。'
 )
 flags.DEFINE_string(
     'max_template_date',
     None,
-    'Maximum template release date to consider (ISO-8601 format: YYYY-MM-DD). '
-    'Important if folding historical test sets.',
+    '纳入考虑的模板最大发布日期（ISO-8601 格式：YYYY-MM-DD）。'
+    '在预测历史测试集时尤其重要。',
 )
 flags.DEFINE_enum(
     'db_preset',
     'full_dbs',
     ['full_dbs', 'reduced_dbs'],
-    'Choose preset MSA database configuration - smaller genetic database '
-    'config (reduced_dbs) or full genetic database config (full_dbs)',
+    '选择预设的 MSA 数据库配置：较小的遗传数据库配置（reduced_dbs）'
+    '或完整的遗传数据库配置（full_dbs）',
 )
 flags.DEFINE_enum(
     'model_preset',
     'monomer',
     ['monomer', 'monomer_casp14', 'monomer_ptm', 'multimer'],
-    'Choose preset model configuration - the monomer model, the monomer model '
-    'with extra ensembling, monomer model with pTM head, or multimer model',
+    '选择预设模型配置：单体模型、带额外集成的单体模型、'
+    '带 pTM 头的单体模型，或多聚体模型',
 )
 flags.DEFINE_integer(
     'num_multimer_predictions_per_model',
     5,
-    'How many '
-    'predictions (each with a different random seed) will be '
-    'generated per model. E.g. if this is 2 and there are 5 '
-    'models then there will be 10 predictions per input. '
-    'Note: this FLAG only applies if model_preset=multimer',
+    '每个模型要生成多少次预测'
+    '（每次使用不同的随机种子）。例如如果这里设为 2，且有 5 个模型，'
+    '那么每个输入会生成 10 个预测结果。'
+    '注意：该参数仅在 model_preset=multimer 时生效',
 )
 flags.DEFINE_boolean(
     'benchmark',
     False,
-    'Run multiple JAX model evaluations to obtain a timing that excludes the '
-    'compilation time, which should be more indicative of the time required '
-    'for inferencing many proteins.',
+    '多次运行 JAX 模型评估，以获得不包含编译时间的耗时统计，'
+    '从而更能反映批量推理多个蛋白时所需的时间。',
 )
 flags.DEFINE_boolean(
     'use_precomputed_msas',
     False,
-    'Whether to read MSAs that have been written to disk instead of running '
-    'the MSA tools. The MSA files are looked up in the output directory, so it '
-    'must stay the same between multiple runs that are to reuse the MSAs. '
-    'WARNING: This will not check if the sequence, database or configuration '
-    'have changed.',
+    '是否读取已经写入磁盘的 MSA，而不是重新运行 MSA 工具。'
+    'MSA 文件会从输出目录中查找，因此如果要在多次运行之间复用 MSA，'
+    '输出目录必须保持不变。警告：这不会检查序列、数据库或配置是否发生变化。',
 )
 flags.DEFINE_string(
     'docker_user',
     f'{os.geteuid()}:{os.getegid()}',
-    'UID:GID with which to run the Docker container. The output directories '
-    'will be owned by this user:group. By default, this is the current user. '
-    'Valid options are: uid or uid:gid, non-numeric values are not recognised '
-    'by Docker unless that user has been created within the container.',
+    '用于运行 Docker 容器的 UID:GID。输出目录将归该用户:组所有。'
+    '默认值为当前用户。有效格式为 uid 或 uid:gid；'
+    '除非该用户已在容器内创建，否则 Docker 不识别非数字值。',
 )
 
 FLAGS = flags.FLAGS
@@ -131,7 +121,7 @@ _ROOT_MOUNT_DIRECTORY = '/mnt/'
 
 
 def _create_mount(mount_name: str, path: str) -> Tuple[types.Mount, str]:
-  """Create a mount point for each file and directory used by the model."""
+  """为模型使用到的每个文件和目录创建挂载点。"""
   path = pathlib.Path(path).absolute()
   target_path = pathlib.Path(_ROOT_MOUNT_DIRECTORY, mount_name)
 
@@ -143,10 +133,9 @@ def _create_mount(mount_name: str, path: str) -> Tuple[types.Mount, str]:
     mounted_path = pathlib.Path(target_path, path.name)
   if not source_path.exists():
     raise ValueError(
-        f'Failed to find source directory "{source_path}" to '
-        'mount in Docker container.'
+        f'找不到要挂载到 Docker 容器中的源目录 "{source_path}"。'
     )
-  logging.info('Mounting %s -> %s', source_path, target_path)
+  logging.info('正在挂载 %s -> %s', source_path, target_path)
   mount = types.Mount(
       target=str(target_path),
       source=str(source_path),
@@ -158,7 +147,7 @@ def _create_mount(mount_name: str, path: str) -> Tuple[types.Mount, str]:
 
 def main(argv):
   if len(argv) > 1:
-    raise app.UsageError('Too many command-line arguments.')
+    raise app.UsageError('命令行参数过多。')
 
   # You can individually override the following paths if you have placed the
   # data in locations other than the FLAGS.data_dir.
@@ -213,9 +202,8 @@ def main(argv):
   data_dir_path = pathlib.Path(FLAGS.data_dir)
   if alphafold_path == data_dir_path or alphafold_path in data_dir_path.parents:
     raise app.UsageError(
-        f'The download directory {FLAGS.data_dir} should not be a subdirectory '
-        'in the AlphaFold repository directory. If it is, the Docker build is '
-        'slow since the large databases are copied during the image creation.'
+        f'下载目录 {FLAGS.data_dir} 不应位于 AlphaFold 仓库目录之内。'
+        '否则在构建镜像时会复制大型数据库，导致 Docker 构建速度很慢。'
     )
 
   mounts = []

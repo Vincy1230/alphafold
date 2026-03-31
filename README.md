@@ -2,139 +2,93 @@
 
 # AlphaFold
 
-This package provides an implementation of the inference pipeline of AlphaFold
-v2. For simplicity, we refer to this model as AlphaFold throughout the rest of
-this document.
+本软件包提供了 AlphaFold v2 推理流水线的实现。为方便起见，本文后续统一将该模型称为 AlphaFold。
 
-We also provide:
+我们还提供：
 
-1.  An implementation of AlphaFold-Multimer. This represents a work in progress
-    and AlphaFold-Multimer isn't expected to be as stable as our monomer
-    AlphaFold system. [Read the guide](#updating-existing-installation) for how
-    to upgrade and update code.
-2.  The [technical note](docs/technical_note_v2.3.0.md) containing the models
-    and inference procedure for an updated AlphaFold v2.3.0.
-3.  A [CASP15 baseline](docs/casp15_predictions.zip) set of predictions along
-    with documentation of any manual interventions performed.
+1.  AlphaFold-Multimer 的实现。它仍在持续完善中，预期不会像我们的单体版 AlphaFold 系统一样稳定。[可阅读此指南](#更新已有安装)了解如何升级和更新代码。
+2.  更新版 AlphaFold v2.3.0 的模型与推理流程说明，见[技术说明](docs/technical_note_v2.3.0.md)。
+3.  一套 [CASP15 基线](docs/casp15_predictions.zip)预测结果，以及对应人工干预说明文档。
 
-Any publication that discloses findings arising from using this source code or
-the model parameters should [cite](#citing-this-work) the
-[AlphaFold paper](https://doi.org/10.1038/s41586-021-03819-2) and, if
-applicable, the
-[AlphaFold-Multimer paper](https://www.biorxiv.org/content/10.1101/2021.10.04.463034v1).
+任何基于本源代码或模型参数得出研究结论的出版物，都应[引用](#引用本文工作) [AlphaFold 论文](https://doi.org/10.1038/s41586-021-03819-2)，并在适用时引用 [AlphaFold-Multimer 论文](https://www.biorxiv.org/content/10.1101/2021.10.04.463034v1)。
 
-Please also refer to the
-[Supplementary Information](https://static-content.springer.com/esm/art%3A10.1038%2Fs41586-021-03819-2/MediaObjects/41586_2021_3819_MOESM1_ESM.pdf)
-for a detailed description of the method.
+关于方法的详细描述，也请参考[补充信息](https://static-content.springer.com/esm/art%3A10.1038%2Fs41586-021-03819-2/MediaObjects/41586_2021_3819_MOESM1_ESM.pdf)。
 
-**You can use a slightly simplified version of AlphaFold with
-community-supported versions (see below).
+**你也可以使用社区支持的简化版 AlphaFold（见下文）。**
 
-If you have any questions, please contact the AlphaFold team at
-[alphafold@deepmind.com](mailto:alphafold@deepmind.com).
+如果你有任何问题，请通过 [alphafold@deepmind.com](mailto:alphafold@deepmind.com) 联系 AlphaFold 团队。
 
 ![CASP14 predictions](imgs/casp14_predictions.gif)
 
-## Installation and running your first prediction
+## 安装并运行第一次预测
 
-You will need a machine running Linux, AlphaFold does not support other
-operating systems. Full installation requires up to 3 TB of disk space to keep
-genetic databases (SSD storage is recommended) and a modern NVIDIA GPU (GPUs
-with more memory can predict larger protein structures).
+你需要一台运行 Linux 的机器；AlphaFold 不支持其他操作系统。完整安装需要最多约 3 TB 磁盘空间来存放遗传数据库（推荐 SSD），并需要一块现代 NVIDIA GPU（显存越大，通常可预测越大的蛋白结构）。
 
-Please follow these steps:
+请按以下步骤操作：
 
-1.  Install [Docker](https://www.docker.com/).
+1.  安装 [Docker](https://www.docker.com/)。
 
-    *   Install
-        [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
-        for GPU support.
-    *   Setup running
-        [Docker as a non-root user](https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user).
+    *   安装 [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) 以支持 GPU。
+    *   配置[以非 root 用户运行 Docker](https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user)。
 
-1.  Clone this repository and `cd` into it.
+1.  克隆本仓库并进入目录。
 
     ```bash
     git clone https://github.com/deepmind/alphafold.git
     cd ./alphafold
     ```
 
-1.  Download genetic databases and model parameters:
+1.  下载遗传数据库和模型参数：
 
-    *   Install `aria2c`. On most Linux distributions it is available via the
-        package manager as the `aria2` package (on Debian-based distributions
-        this can be installed by running `sudo apt install aria2`).
-        Same for `rsync` and `parallel` (`sudo apt install rsync parallel`).
+    *   安装 `aria2c`。在大多数 Linux 发行版中，它可通过包管理器以 `aria2` 软件包形式安装（在 Debian 系发行版中，可运行 `sudo apt install aria2`）。
+        `rsync` 和 `parallel` 同理（`sudo apt install rsync parallel`）。
 
-    *   Please use the script `scripts/download_all_data.sh` to download and set
-        up full databases. This may take substantial time (download size is 556
-        GB), so we recommend running this script in the background:
+    *   请使用脚本 `scripts/download_all_data.sh` 下载并配置完整数据库。这个过程可能耗时较长（下载量约 556 GB），因此建议在后台运行：
 
     ```bash
     scripts/download_all_data.sh <DOWNLOAD_DIR> > download.log 2> download_all.log &
     ```
 
-    *   **Note: The download directory `<DOWNLOAD_DIR>` should *not* be a
-        subdirectory in the AlphaFold repository directory.** If it is, the
-        Docker build will be slow as the large databases will be copied into the
-        docker build context.
+    *   **注意：下载目录 `<DOWNLOAD_DIR>` 不应是 AlphaFold 仓库目录的子目录。** 否则在 Docker 构建时会把大型数据库复制进构建上下文，导致构建明显变慢。
 
-    *   It is possible to run AlphaFold with reduced databases; please refer to
-        the [complete documentation](#genetic-databases).
+    *   AlphaFold 也可以配合精简版数据库运行；详情请参见[完整文档](#遗传数据库)。
 
-1.  Check that AlphaFold will be able to use a GPU by running:
+1.  运行以下命令，检查 AlphaFold 是否能够使用 GPU：
 
     ```bash
     docker run --rm --gpus all nvidia/cuda:11.0-base nvidia-smi
     ```
 
-    The output of this command should show a list of your GPUs. If it doesn't,
-    check if you followed all steps correctly when setting up the
-    [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
-    or take a look at the following
-    [NVIDIA Docker issue](https://github.com/NVIDIA/nvidia-docker/issues/1447#issuecomment-801479573).
+    该命令的输出应显示你的 GPU 列表。如果没有，请检查是否已正确完成 [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) 的安装步骤，或参考这个 [NVIDIA Docker issue](https://github.com/NVIDIA/nvidia-docker/issues/1447#issuecomment-801479573)。
 
-    If you wish to run AlphaFold using Singularity (a common containerization
-    platform on HPC systems) we recommend using some of the third party
-    Singularity setups as linked in
-    https://github.com/deepmind/alphafold/issues/10 or
-    https://github.com/deepmind/alphafold/issues/24.
+    如果你希望使用 Singularity 运行 AlphaFold（它是在 HPC 系统上常见的容器平台），我们建议使用第三方提供的 Singularity 配置，参考：
+    https://github.com/deepmind/alphafold/issues/10
+    或 https://github.com/deepmind/alphafold/issues/24 。
 
-1.  Build the Docker image:
+1.  构建 Docker 镜像：
 
     ```bash
     docker build -f docker/Dockerfile -t alphafold .
     ```
 
-    If you encounter the following error:
+    如果遇到如下错误：
 
     ```
     W: GPG error: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64 InRelease: The following signatures couldn't be verified because the public key is not available: NO_PUBKEY A4B469963BF863CC
     E: The repository 'https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64 InRelease' is not signed.
     ```
 
-    use the workaround described in
-    https://github.com/deepmind/alphafold/issues/463#issuecomment-1124881779.
+    请使用 https://github.com/deepmind/alphafold/issues/463#issuecomment-1124881779 中描述的变通方案。
 
-1.  Install the `run_docker.py` dependencies. Note: You may optionally wish to
-    create a
-    [Python Virtual Environment](https://docs.python.org/3/tutorial/venv.html)
-    to prevent conflicts with your system's Python environment.
+1.  安装 `run_docker.py` 的依赖。注意：你也可以选择创建一个 [Python 虚拟环境](https://docs.python.org/3/tutorial/venv.html)，以避免与系统 Python 环境发生冲突。
 
     ```bash
     pip3 install -r docker/requirements.txt
     ```
 
-1.  Make sure that the output directory exists (the default is `/tmp/alphafold`)
-    and that you have sufficient permissions to write into it.
+1.  确保输出目录存在（默认是 `/tmp/alphafold`），并且你拥有足够的写入权限。
 
-1.  Run `run_docker.py` pointing to a FASTA file containing the protein
-    sequence(s) for which you wish to predict the structure (`--fasta_paths`
-    parameter). AlphaFold will search for the available templates before the
-    date specified by the `--max_template_date` parameter; this could be used to
-    avoid certain templates during modeling. `--data_dir` is the directory with
-    downloaded genetic databases and `--output_dir` is the absolute path to the
-    output directory.
+1.  运行 `run_docker.py`，并将其指向一个包含待预测蛋白序列的 FASTA 文件（`--fasta_paths` 参数）。AlphaFold 会搜索 `--max_template_date` 参数指定日期之前可用的模板；这可以用来在建模时排除某些模板。`--data_dir` 是下载后的遗传数据库目录，`--output_dir` 是输出目录的绝对路径。
 
     ```bash
     python3 docker/run_docker.py \
@@ -144,15 +98,13 @@ Please follow these steps:
       --output_dir=/home/user/absolute_path_to_the_output_dir
     ```
 
-1.  Once the run is over, the output directory shall contain predicted
-    structures of the target protein. Please check the documentation below for
-    additional options and troubleshooting tips.
+1.  运行完成后，输出目录中将包含目标蛋白的预测结构。更多选项与排障提示请见下方文档。
 
-### Genetic databases
+### 遗传数据库
 
-This step requires `aria2c` and `rsync` to be installed on your machine. `GNU Parallel` is also highly recommended to speed up the unzipping process.
+此步骤要求你的机器已安装 `aria2c` 和 `rsync`。同时也强烈建议安装 `GNU Parallel`，以加快解压过程。
 
-AlphaFold needs multiple genetic (sequence) databases to run:
+AlphaFold 运行时需要多个遗传（序列）数据库：
 
 *   [BFD](https://bfd.mmseqs.com/),
 *   [MGnify](https://www.ebi.ac.uk/metagenomics/),
@@ -163,48 +115,33 @@ AlphaFold needs multiple genetic (sequence) databases to run:
 *   [UniProt](https://www.uniprot.org/uniprot/) – only for AlphaFold-Multimer,
 *   [UniRef90](https://www.uniprot.org/help/uniref).
 
-We provide a script `scripts/download_all_data.sh` that can be used to download
-and set up all of these databases:
+我们提供了脚本 `scripts/download_all_data.sh`，可用于下载并配置上述所有数据库：
 
-*   Recommended default:
+*   推荐默认方式：
 
     ```bash
     scripts/download_all_data.sh <DOWNLOAD_DIR>
     ```
 
-    will download the full databases.
+    将下载完整数据库。
 
-*   With `reduced_dbs` parameter:
+*   使用 `reduced_dbs` 参数：
 
     ```bash
     scripts/download_all_data.sh <DOWNLOAD_DIR> reduced_dbs
     ```
 
-    will download a reduced version of the databases to be used with the
-    `reduced_dbs` database preset. This shall be used with the corresponding
-    AlphaFold parameter `--db_preset=reduced_dbs` later during the AlphaFold run
-    (please see [AlphaFold parameters](#running-alphafold) section).
+    将下载数据库的精简版，以配合 `reduced_dbs` 数据库预设使用。后续运行 AlphaFold 时，需要搭配参数 `--db_preset=reduced_dbs`（详见 [AlphaFold 参数](#运行-alphafold) 一节）。
 
-:ledger: **Note: The download directory `<DOWNLOAD_DIR>` should *not* be a
-subdirectory in the AlphaFold repository directory.** If it is, the Docker build
-will be slow as the large databases will be copied during the image creation.
+:ledger: **注意：下载目录 `<DOWNLOAD_DIR>` 不应是 AlphaFold 仓库目录的子目录。** 否则在镜像创建过程中会复制大型数据库，导致 Docker 构建速度变慢。
 
-We don't provide exactly the database versions used in CASP14 – see the
-[note on reproducibility](#note-on-casp14-reproducibility). Some of the
-databases are mirrored for speed, see [mirrored databases](#mirrored-databases).
+我们并未提供与 CASP14 完全一致的数据库版本，详情参见[可复现性说明](#关于-casp14-可复现性的说明)。部分数据库提供了镜像以提升速度，见[镜像数据库](#镜像数据库)。
 
-:ledger: **Note: The total download size for the full databases is around 556 GB
-and the total size when unzipped is 2.62 TB. Please make sure you have a large
-enough hard drive space, bandwidth and time to download. We recommend using an
-SSD for better genetic search performance.**
+:ledger: **注意：完整数据库的总下载大小约为 556 GB，解压后总大小约为 2.62 TB。请确保你有足够的磁盘空间、带宽和下载时间。为获得更好的遗传搜索性能，推荐使用 SSD。**
 
-:ledger: **Note: If the download directory and datasets don't have full read and
-write permissions, it can cause errors with the MSA tools, with opaque
-(external) error messages. Please ensure the required permissions are applied,
-e.g. with the `sudo chmod 755 --recursive "$DOWNLOAD_DIR"` command.**
+:ledger: **注意：如果下载目录和数据集没有完整的读写权限，MSA 工具可能会报错，而且错误信息通常比较晦涩。请确保已正确设置权限，例如可执行 `sudo chmod 755 --recursive "$DOWNLOAD_DIR"`。**
 
-The `download_all_data.sh` script will also download the model parameter files.
-Once the script has finished, you should have the following directory structure:
+`download_all_data.sh` 脚本也会一并下载模型参数文件。脚本完成后，你的目录结构应大致如下：
 
 ```
 $DOWNLOAD_DIR/                             # Total: ~ 2.62 TB (download: 556 GB)
@@ -236,124 +173,74 @@ $DOWNLOAD_DIR/                             # Total: ~ 2.62 TB (download: 556 GB)
         uniref90.fasta
 ```
 
-`bfd/` is only downloaded if you download the full databases, and `small_bfd/`
-is only downloaded if you download the reduced databases.
+只有在下载完整数据库时才会下载 `bfd/`，而 `small_bfd/` 只会在下载精简数据库时下载。
 
-### Model parameters
+### 模型参数
 
-While the AlphaFold code is licensed under the Apache 2.0 License, the AlphaFold
-parameters and CASP15 prediction data are made available under the terms of the
-CC BY 4.0 license. Please see the [Disclaimer](#license-and-disclaimer) below
-for more detail.
+虽然 AlphaFold 代码采用 Apache 2.0 许可证发布，但 AlphaFold 参数和 CASP15 预测数据是依据 CC BY 4.0 许可证提供的。更多细节请参见下方的[许可与免责声明](#许可与免责声明)。
 
-The AlphaFold parameters are available from
-https://storage.googleapis.com/alphafold/alphafold_params_2022-12-06.tar, and
-are downloaded as part of the `scripts/download_all_data.sh` script. This script
-will download parameters for:
+AlphaFold 参数可从
+https://storage.googleapis.com/alphafold/alphafold_params_2022-12-06.tar
+获取，并会作为 `scripts/download_all_data.sh` 脚本的一部分下载。该脚本会下载以下参数：
 
-*   5 models which were used during CASP14, and were extensively validated for
-    structure prediction quality (see Jumper et al. 2021, Suppl. Methods 1.12
-    for details).
-*   5 pTM models, which were fine-tuned to produce pTM (predicted TM-score) and
-    (PAE) predicted aligned error values alongside their structure predictions
-    (see Jumper et al. 2021, Suppl. Methods 1.9.7 for details).
-*   5 AlphaFold-Multimer models that produce pTM and PAE values alongside their
-    structure predictions.
+*   5 个在 CASP14 中使用过、并已对结构预测质量进行了充分验证的模型（详见 Jumper et al. 2021，补充方法 1.12）。
+*   5 个 pTM 模型，这些模型经过微调，可在给出结构预测的同时输出 pTM（预测 TM-score）和 PAE（预测对齐误差）数值（详见 Jumper et al. 2021，补充方法 1.9.7）。
+*   5 个 AlphaFold-Multimer 模型，它们也会在结构预测结果中同时输出 pTM 和 PAE 数值。
 
-### Updating existing installation
+### 更新已有安装
 
-If you have a previous version you can either reinstall fully from scratch
-(remove everything and run the setup from scratch) or you can do an incremental
-update that will be significantly faster but will require a bit more work. Make
-sure you follow these steps in the exact order they are listed below:
+如果你之前已经安装过旧版本，可以选择完全重装（删除现有内容并从头重新配置），也可以执行增量更新。后者会快很多，但步骤稍微复杂一些。请务必严格按照下面列出的顺序执行：
 
-1.  **Update the code.**
-    *   Go to the directory with the cloned AlphaFold repository and run `git
-        fetch origin main` to get all code updates.
-1.  **Update the UniProt, UniRef, MGnify and PDB seqres databases.**
-    *   Remove `<DOWNLOAD_DIR>/uniprot`.
-    *   Run `scripts/download_uniprot.sh <DOWNLOAD_DIR>`.
-    *   Remove `<DOWNLOAD_DIR>/uniclust30`.
-    *   Run `scripts/download_uniref30.sh <DOWNLOAD_DIR>`.
-    *   Remove `<DOWNLOAD_DIR>/uniref90`.
-    *   Run `scripts/download_uniref90.sh <DOWNLOAD_DIR>`.
-    *   Remove `<DOWNLOAD_DIR>/mgnify`.
-    *   Run `scripts/download_mgnify.sh <DOWNLOAD_DIR>`.
-    *   Remove `<DOWNLOAD_DIR>/pdb_mmcif`. It is needed to have PDB SeqRes and
-        PDB from exactly the same date. Failure to do this step will result in
-        potential errors when searching for templates when running
-        AlphaFold-Multimer.
-    *   Run `scripts/download_pdb_mmcif.sh <DOWNLOAD_DIR>`.
-    *   Run `scripts/download_pdb_seqres.sh <DOWNLOAD_DIR>`.
-1.  **Update the model parameters.**
-    *   Remove the old model parameters in `<DOWNLOAD_DIR>/params`.
-    *   Download new model parameters using
-        `scripts/download_alphafold_params.sh <DOWNLOAD_DIR>`.
-1.  **Follow [Running AlphaFold](#running-alphafold).**
+1.  **更新代码。**
+    *   进入已克隆的 AlphaFold 仓库目录，运行 `git fetch origin main` 获取所有代码更新。
+1.  **更新 UniProt、UniRef、MGnify 和 PDB seqres 数据库。**
+    *   删除 `<DOWNLOAD_DIR>/uniprot`。
+    *   运行 `scripts/download_uniprot.sh <DOWNLOAD_DIR>`。
+    *   删除 `<DOWNLOAD_DIR>/uniclust30`。
+    *   运行 `scripts/download_uniref30.sh <DOWNLOAD_DIR>`。
+    *   删除 `<DOWNLOAD_DIR>/uniref90`。
+    *   运行 `scripts/download_uniref90.sh <DOWNLOAD_DIR>`。
+    *   删除 `<DOWNLOAD_DIR>/mgnify`。
+    *   运行 `scripts/download_mgnify.sh <DOWNLOAD_DIR>`。
+    *   删除 `<DOWNLOAD_DIR>/pdb_mmcif`。这样做是为了确保 PDB SeqRes 和 PDB 使用完全相同日期的数据；如果跳过这一步，在运行 AlphaFold-Multimer 时搜索模板可能会报错。
+    *   运行 `scripts/download_pdb_mmcif.sh <DOWNLOAD_DIR>`。
+    *   运行 `scripts/download_pdb_seqres.sh <DOWNLOAD_DIR>`。
+1.  **更新模型参数。**
+    *   删除 `<DOWNLOAD_DIR>/params` 中旧的模型参数。
+    *   运行 `scripts/download_alphafold_params.sh <DOWNLOAD_DIR>` 下载新的模型参数。
+1.  **继续参照 [运行 AlphaFold](#运行-alphafold)。**
 
-#### Using deprecated model weights
+#### 使用已弃用的模型权重
 
-To use the deprecated v2.2.0 AlphaFold-Multimer model weights:
+若要使用已弃用的 v2.2.0 AlphaFold-Multimer 模型权重：
 
-1.  Change `SOURCE_URL` in `scripts/download_alphafold_params.sh` to
-    `https://storage.googleapis.com/alphafold/alphafold_params_2022-03-02.tar`,
-    and download the old parameters.
-2.  Change the `_v3` to `_v2` in the multimer `MODEL_PRESETS` in `config.py`.
+1.  将 `scripts/download_alphafold_params.sh` 中的 `SOURCE_URL` 改为 `https://storage.googleapis.com/alphafold/alphafold_params_2022-03-02.tar`，然后下载旧参数。
+2.  将 `config.py` 中多聚体 `MODEL_PRESETS` 里的 `_v3` 改为 `_v2`。
 
-To use the deprecated v2.1.0 AlphaFold-Multimer model weights:
+若要使用已弃用的 v2.1.0 AlphaFold-Multimer 模型权重：
 
-1.  Change `SOURCE_URL` in `scripts/download_alphafold_params.sh` to
-    `https://storage.googleapis.com/alphafold/alphafold_params_2022-01-19.tar`,
-    and download the old parameters.
-2.  Remove the `_v3` in the multimer `MODEL_PRESETS` in `config.py`.
+1.  将 `scripts/download_alphafold_params.sh` 中的 `SOURCE_URL` 改为 `https://storage.googleapis.com/alphafold/alphafold_params_2022-01-19.tar`，然后下载旧参数。
+2.  删除 `config.py` 中多聚体 `MODEL_PRESETS` 里的 `_v3`。
 
-## Running AlphaFold
+## 运行 AlphaFold
 
-**The simplest way to run AlphaFold is using the provided Docker script.** This
-was tested on Google Cloud with a machine using the `nvidia-gpu-cloud-image`
-with 12 vCPUs, 85 GB of RAM, a 100 GB boot disk, the databases on an additional
-3 TB disk, and an A100 GPU. For your first run, please follow the instructions
-from
-[Installation and running your first prediction](#installation-and-running-your-first-prediction)
-section.
+**运行 AlphaFold 最简单的方式是使用项目自带的 Docker 脚本。** 它已在 Google Cloud 上通过如下配置测试：使用 `nvidia-gpu-cloud-image` 镜像、12 个 vCPU、85 GB 内存、100 GB 启动盘、额外 3 TB 磁盘存放数据库，以及一张 A100 GPU。第一次运行请先参考[安装并运行第一次预测](#安装并运行第一次预测)一节。
 
-1.  By default, Alphafold will attempt to use all visible GPU devices. To use a
-    subset, specify a comma-separated list of GPU UUID(s) or index(es) using the
-    `--gpu_devices` flag. See
-    [GPU enumeration](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#gpu-enumeration)
-    for more details.
+1.  默认情况下，AlphaFold 会尝试使用所有可见 GPU 设备。如果只想使用一部分设备，可通过 `--gpu_devices` 参数指定逗号分隔的 GPU UUID 或索引。更多说明请参见 [GPU enumeration](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#gpu-enumeration)。
 
-1.  You can control which AlphaFold model to run by adding the `--model_preset=`
-    flag. We provide the following models:
+1.  你可以通过添加 `--model_preset=` 参数来控制要运行的 AlphaFold 模型。可选模型如下：
 
-    *   **monomer**: This is the original model used at CASP14 with no
-        ensembling.
+    *   **monomer**：CASP14 中使用的原始单体模型，不使用集成。
+    *   **monomer\_casp14**：CASP14 中使用的原始单体模型，`num_ensemble=8`，与我们在 CASP14 中的配置一致。该模式主要用于可复现性，因为计算成本约为 8 倍，而精度提升有限（CASP14 域上平均 GDT 仅提升约 +0.1）。
+    *   **monomer\_ptm**：在原始 CASP14 模型基础上加入 pTM 头微调得到的模型，可提供成对置信度指标。它的精度略低于普通单体模型。
+    *   **multimer**：这是 [AlphaFold-Multimer](#引用本文工作) 模型。要使用它，需要提供包含多条序列的 FASTA 文件，并且必须先下载 UniProt 数据库。
 
-    *   **monomer\_casp14**: This is the original model used at CASP14 with
-        `num_ensemble=8`, matching our CASP14 configuration. This is largely
-        provided for reproducibility as it is 8x more computationally expensive
-        for limited accuracy gain (+0.1 average GDT gain on CASP14 domains).
+1.  你可以通过在运行命令中添加 `--db_preset=reduced_dbs` 或 `--db_preset=full_dbs`，在 MSA 速度和质量之间进行权衡。可选预设如下：
 
-    *   **monomer\_ptm**: This is the original CASP14 model fine tuned with the
-        pTM head, providing a pairwise confidence measure. It is slightly less
-        accurate than the normal monomer model.
+    *   **reduced\_dbs**：该预设针对速度和较低硬件要求做了优化，使用精简版 BFD 数据库。需要 8 个 CPU 核心（vCPU）、8 GB 内存和 600 GB 磁盘空间。
+    *   **full\_dbs**：使用 CASP14 中用到的全部遗传数据库。
 
-    *   **multimer**: This is the [AlphaFold-Multimer](#citing-this-work) model.
-        To use this model, provide a multi-sequence FASTA file. In addition, the
-        UniProt database should have been downloaded.
-
-1.  You can control MSA speed/quality tradeoff by adding
-    `--db_preset=reduced_dbs` or `--db_preset=full_dbs` to the run command. We
-    provide the following presets:
-
-    *   **reduced\_dbs**: This preset is optimized for speed and lower hardware
-        requirements. It runs with a reduced version of the BFD database. It
-        requires 8 CPU cores (vCPUs), 8 GB of RAM, and 600 GB of disk space.
-
-    *   **full\_dbs**: This runs with all genetic databases used at CASP14.
-
-    Running the command above with the `monomer` model preset and the
-    `reduced_dbs` data preset would look like this:
+    如果使用 `monomer` 模型预设和 `reduced_dbs` 数据预设，命令示例如下：
 
     ```bash
     python3 docker/run_docker.py \
@@ -365,30 +252,20 @@ section.
       --output_dir=/home/user/absolute_path_to_the_output_dir
     ```
 
-1.  After generating the predicted model, AlphaFold runs a relaxation step to
-    improve local geometry. By default, only the best model (by pLDDT) is
-    relaxed (`--models_to_relax=best`), but also all of the models
-    (`--models_to_relax=all`) or none of the models (`--models_to_relax=none`)
-    can be relaxed.
+1.  生成预测模型后，AlphaFold 会执行一次弛豫步骤，以改善局部几何结构。默认只会弛豫最佳模型（按 pLDDT 排序，对应 `--models_to_relax=best`），你也可以选择弛豫全部模型（`--models_to_relax=all`）或完全不弛豫（`--models_to_relax=none`）。
 
-1.  The relaxation step can be run on GPU (faster, but could be less stable) or
-    CPU (slow, but stable). This can be controlled with
-    `--enable_gpu_relax=true` (default) or `--enable_gpu_relax=false`.
+1.  弛豫步骤既可以在 GPU 上运行（更快，但可能稍微不稳定），也可以在 CPU 上运行（更慢，但更稳定）。可通过 `--enable_gpu_relax=true`（默认）或 `--enable_gpu_relax=false` 控制。
 
-1.  AlphaFold can reuse MSAs (multiple sequence alignments) for the same
-    sequence via `--use_precomputed_msas=true` option; this can be useful for
-    trying different AlphaFold parameters. This option assumes that the
-    directory structure generated by the first AlphaFold run in the output
-    directory exists and that the protein sequence is the same.
+1.  AlphaFold 可以通过 `--use_precomputed_msas=true` 复用同一条序列先前生成的 MSA（多序列比对），这在尝试不同 AlphaFold 参数时很有用。该选项要求第一次运行 AlphaFold 时在输出目录下生成的目录结构仍然存在，且蛋白序列保持不变。
 
-### Running AlphaFold-Multimer
+### 运行 AlphaFold-Multimer
 
-All steps are the same as when running the monomer system, but you will have to
+运行步骤与单体系统基本相同，但你需要：
 
-*   provide an input fasta with multiple sequences,
-*   set `--model_preset=multimer`,
+*   提供一个包含多条序列的输入 FASTA 文件；
+*   设置 `--model_preset=multimer`。
 
-An example that folds a protein complex `multimer.fasta`:
+例如，对蛋白复合物 `multimer.fasta` 进行预测的命令如下：
 
 ```bash
 python3 docker/run_docker.py \
@@ -399,22 +276,13 @@ python3 docker/run_docker.py \
   --output_dir=/home/user/absolute_path_to_the_output_dir
 ```
 
-By default the multimer system will run 5 seeds per model (25 total predictions)
-for a small drop in accuracy you may wish to run a single seed per model. This
-can be done via the `--num_multimer_predictions_per_model` flag, e.g. set it to
-`--num_multimer_predictions_per_model=1` to run a single seed per model.
+默认情况下，多聚体系统会对每个模型运行 5 个随机种子（总计 25 次预测）。如果你愿意接受轻微的精度下降，可以只为每个模型运行 1 个随机种子。可通过 `--num_multimer_predictions_per_model` 参数控制，例如设置为 `--num_multimer_predictions_per_model=1`。
 
-### AlphaFold prediction speed
+### AlphaFold 预测速度
 
-The table below reports prediction runtimes for proteins of various lengths. We
-only measure unrelaxed structure prediction with three recycles while excluding
-runtimes from MSA and template search. When running `docker/run_docker.py` with
-`--benchmark=true`, this runtime is stored in `timings.json`. All runtimes are
-from a single A100 NVIDIA GPU. Prediction speed on A100 for smaller structures
-can be improved by increasing `global_config.subbatch_size` in
-`alphafold/model/config.py`.
+下表给出了不同长度蛋白的预测耗时。这里只统计不含弛豫的结构预测时间，使用 3 次 recycle，并且不计入 MSA 与模板搜索时间。运行 `docker/run_docker.py` 且设置 `--benchmark=true` 时，该时间会记录在 `timings.json` 中。所有耗时均来自单张 NVIDIA A100 GPU。对于更小的结构，可通过增大 `alphafold/model/config.py` 中的 `global_config.subbatch_size` 来提升 A100 上的预测速度。
 
-No. residues | Prediction time (s)
+残基数 | 预测时间（秒）
 -----------: | ------------------:
 100          | 4.9
 200          | 7.7
@@ -436,20 +304,20 @@ No. residues | Prediction time (s)
 4,500        | 12,475
 5,000        | 18,824
 
-### Examples
+### 示例
 
-Below are examples on how to use AlphaFold in different scenarios.
+下面给出几种不同场景下使用 AlphaFold 的示例。
 
-#### Folding a monomer
+#### 预测单体
 
-Say we have a monomer with the sequence `<SEQUENCE>`. The input fasta should be:
+假设我们有一个单体，其序列为 `<SEQUENCE>`。输入 FASTA 应如下所示：
 
 ```fasta
 >sequence_name
 <SEQUENCE>
 ```
 
-Then run the following command:
+然后运行以下命令：
 
 ```bash
 python3 docker/run_docker.py \
@@ -460,10 +328,9 @@ python3 docker/run_docker.py \
   --output_dir=/home/user/absolute_path_to_the_output_dir
 ```
 
-#### Folding a homomer
+#### 预测同源多聚体
 
-Say we have a homomer with 3 copies of the same sequence `<SEQUENCE>`. The input
-fasta should be:
+假设我们有一个由 3 份相同序列 `<SEQUENCE>` 组成的同源多聚体。输入 FASTA 应如下所示：
 
 ```fasta
 >sequence_1
@@ -474,7 +341,7 @@ fasta should be:
 <SEQUENCE>
 ```
 
-Then run the following command:
+然后运行以下命令：
 
 ```bash
 python3 docker/run_docker.py \
@@ -485,10 +352,9 @@ python3 docker/run_docker.py \
   --output_dir=/home/user/absolute_path_to_the_output_dir
 ```
 
-#### Folding a heteromer
+#### 预测异源多聚体
 
-Say we have an A2B3 heteromer, i.e. with 2 copies of `<SEQUENCE A>` and 3 copies
-of `<SEQUENCE B>`. The input fasta should be:
+假设我们有一个 A2B3 异源多聚体，即包含 2 份 `<SEQUENCE A>` 和 3 份 `<SEQUENCE B>`。输入 FASTA 应如下所示：
 
 ```fasta
 >sequence_1
@@ -503,7 +369,7 @@ of `<SEQUENCE B>`. The input fasta should be:
 <SEQUENCE B>
 ```
 
-Then run the following command:
+然后运行以下命令：
 
 ```bash
 python3 docker/run_docker.py \
@@ -514,11 +380,11 @@ python3 docker/run_docker.py \
   --output_dir=/home/user/absolute_path_to_the_output_dir
 ```
 
-#### Folding multiple monomers one after another
+#### 依次预测多个单体
 
-Say we have a two monomers, `monomer1.fasta` and `monomer2.fasta`.
+假设我们有两个单体：`monomer1.fasta` 和 `monomer2.fasta`。
 
-We can fold both sequentially by using the following command:
+可以使用以下命令按顺序依次预测它们：
 
 ```bash
 python3 docker/run_docker.py \
@@ -529,11 +395,11 @@ python3 docker/run_docker.py \
   --output_dir=/home/user/absolute_path_to_the_output_dir
 ```
 
-#### Folding multiple multimers one after another
+#### 依次预测多个多聚体
 
-Say we have a two multimers, `multimer1.fasta` and `multimer2.fasta`.
+假设我们有两个多聚体：`multimer1.fasta` 和 `multimer2.fasta`。
 
-We can fold both sequentially by using the following command:
+可以使用以下命令按顺序依次预测它们：
 
 ```bash
 python3 docker/run_docker.py \
@@ -544,13 +410,9 @@ python3 docker/run_docker.py \
   --output_dir=/home/user/absolute_path_to_the_output_dir
 ```
 
-### AlphaFold output
+### AlphaFold 输出
 
-The outputs will be saved in a subdirectory of the directory provided via the
-`--output_dir` flag of `run_docker.py` (defaults to `/tmp/alphafold/`). The
-outputs include the computed MSAs, unrelaxed structures, relaxed structures,
-ranked structures, raw model outputs, prediction metadata, and section timings.
-The `--output_dir` directory will have the following structure:
+输出结果会保存在 `run_docker.py` 的 `--output_dir` 参数所指定目录的子目录中（默认是 `/tmp/alphafold/`）。输出内容包括计算得到的 MSA、未弛豫结构、弛豫后结构、排序后结构、原始模型输出、预测元数据以及各阶段耗时。`--output_dir` 目录结构如下：
 
 ```
 <target_name>/
@@ -568,96 +430,40 @@ The `--output_dir` directory will have the following structure:
         uniref90_hits.sto
 ```
 
-The contents of each output file are as follows:
+各输出文件的内容如下：
 
-*   `features.pkl` – A `pickle` file containing the input feature NumPy arrays
-    used by the models to produce the structures.
-*   `unrelaxed_model_*.pdb` – A PDB format text file containing the predicted
-    structure, exactly as outputted by the model.
-*   `relaxed_model_*.pdb` – A PDB format text file containing the predicted
-    structure, after performing an Amber relaxation procedure on the unrelaxed
-    structure prediction (see Jumper et al. 2021, Suppl. Methods 1.8.6 for
-    details).
-*   `ranked_*.pdb` – A PDB format text file containing the predicted structures,
-    after reordering by model confidence. Here `ranked_i.pdb` should contain the
-    prediction with the (`i + 1`)-th highest confidence (so that `ranked_0.pdb`
-    has the highest confidence). To rank model confidence, we use predicted LDDT
-    (pLDDT) scores (see Jumper et al. 2021, Suppl. Methods 1.9.6 for details).
-    If `--models_to_relax=all` then all ranked structures are relaxed. If
-    `--models_to_relax=best` then only `ranked_0.pdb` is relaxed (the rest are
-    unrelaxed). If `--models_to_relax=none`, then the ranked structures are all
-    unrelaxed.
-*   `ranking_debug.json` – A JSON format text file containing the pLDDT values
-    used to perform the model ranking, and a mapping back to the original model
-    names.
-*   `relax_metrics.json` – A JSON format text file containing relax metrics, for
-    instance remaining violations.
-*   `timings.json` – A JSON format text file containing the times taken to run
-    each section of the AlphaFold pipeline.
-*   `msas/` - A directory containing the files describing the various genetic
-    tool hits that were used to construct the input MSA.
-*   `result_model_*.pkl` – A `pickle` file containing a nested dictionary of the
-    various NumPy arrays directly produced by the model. In addition to the
-    output of the structure module, this includes auxiliary outputs such as:
+*   `features.pkl`：`pickle` 文件，包含模型生成结构时使用的输入特征 NumPy 数组。
+*   `unrelaxed_model_*.pdb`：PDB 格式文本文件，内容为模型直接输出的预测结构。
+*   `relaxed_model_*.pdb`：PDB 格式文本文件，内容为对未弛豫预测结构执行 Amber 弛豫流程后的结果（详见 Jumper et al. 2021，补充方法 1.8.6）。
+*   `ranked_*.pdb`：PDB 格式文本文件，内容为按模型置信度重新排序后的预测结构。这里 `ranked_i.pdb` 表示第 `i + 1` 高置信度的预测结果，因此 `ranked_0.pdb` 置信度最高。模型排序使用预测 LDDT（pLDDT）分数（详见 Jumper et al. 2021，补充方法 1.9.6）。如果设置 `--models_to_relax=all`，则所有排序后的结构都会被弛豫；如果设置 `--models_to_relax=best`，则只有 `ranked_0.pdb` 会被弛豫；如果设置 `--models_to_relax=none`，则所有排序后的结构都保持未弛豫状态。
+*   `ranking_debug.json`：JSON 格式文本文件，包含用于模型排序的 pLDDT 值，以及与原始模型名称之间的映射关系。
+*   `relax_metrics.json`：JSON 格式文本文件，包含弛豫指标，例如剩余违规项。
+*   `timings.json`：JSON 格式文本文件，包含 AlphaFold 流水线各部分的运行耗时。
+*   `msas/`：目录，包含构建输入 MSA 时使用的各类遗传工具命中文件。
+*   `result_model_*.pkl`：`pickle` 文件，包含模型直接生成的多个 NumPy 数组组成的嵌套字典。除结构模块输出外，还包括以下辅助输出：
 
-    *   Distograms (`distogram/logits` contains a NumPy array of shape [N_res,
-        N_res, N_bins] and `distogram/bin_edges` contains the definition of the
-        bins).
-    *   Per-residue pLDDT scores (`plddt` contains a NumPy array of shape
-        [N_res] with the range of possible values from `0` to `100`, where `100`
-        means most confident). This can serve to identify sequence regions
-        predicted with high confidence or as an overall per-target confidence
-        score when averaged across residues.
-    *   Present only if using pTM models: predicted TM-score (`ptm` field
-        contains a scalar). As a predictor of a global superposition metric,
-        this score is designed to also assess whether the model is confident in
-        the overall domain packing.
-    *   Present only if using pTM models: predicted pairwise aligned errors
-        (`predicted_aligned_error` contains a NumPy array of shape [N_res,
-        N_res] with the range of possible values from `0` to
-        `max_predicted_aligned_error`, where `0` means most confident). This can
-        serve for a visualisation of domain packing confidence within the
-        structure.
+    *   Distogram（`distogram/logits` 包含形状为 `[N_res, N_res, N_bins]` 的 NumPy 数组，`distogram/bin_edges` 包含分箱定义）。
+    *   每残基 pLDDT 分数（`plddt` 是形状为 `[N_res]` 的 NumPy 数组，取值范围为 `0` 到 `100`，其中 `100` 表示置信度最高）。它可用于识别高置信度预测的序列区域，也可在对残基取平均后作为整体目标的置信度分数。
+    *   仅在使用 pTM 模型时提供：预测 TM-score（`ptm` 字段为标量）。作为全局叠合指标的预测量，它也用于评估模型对整体结构域堆积是否有信心。
+    *   仅在使用 pTM 模型时提供：预测成对对齐误差（`predicted_aligned_error` 是形状为 `[N_res, N_res]` 的 NumPy 数组，取值范围为 `0` 到 `max_predicted_aligned_error`，其中 `0` 表示置信度最高）。它可用于可视化结构内部结构域堆积的置信度。
 
-The pLDDT confidence measure is stored in the B-factor field of the output PDB
-files (although unlike a B-factor, higher pLDDT is better, so care must be taken
-when using for tasks such as molecular replacement).
+pLDDT 置信度指标会保存在输出 PDB 文件的 B-factor 字段中（但与传统 B-factor 不同，pLDDT 越高越好，因此在分子置换等任务中使用时需要特别注意）。
 
-This code has been tested to match mean top-1 accuracy on a CASP14 test set with
-pLDDT ranking over 5 model predictions (some CASP targets were run with earlier
-versions of AlphaFold and some had manual interventions; see our forthcoming
-publication for details). Some targets such as T1064 may also have high
-individual run variance over random seeds.
+该代码已经过测试：在使用 5 个模型预测、并按 pLDDT 排序的 CASP14 测试集上，其平均 top-1 精度与我们报告结果一致（部分 CASP 目标使用的是更早版本的 AlphaFold，且部分目标进行了人工干预，详见后续论文）。像 T1064 这样的目标在不同随机种子下也可能出现较高的单次运行方差。
 
-## Inferencing many proteins
+## 批量推理多个蛋白
 
-The provided inference script is optimized for predicting the structure of a
-single protein, and it will compile the neural network to be specialized to
-exactly the size of the sequence, MSA, and templates. For large proteins, the
-compile time is a negligible fraction of the runtime, but it may become more
-significant for small proteins or if the multi-sequence alignments are already
-precomputed. In the bulk inference case, it may make sense to use our
-`make_fixed_size` function to pad the inputs to a uniform size, thereby reducing
-the number of compilations required.
+项目自带的推理脚本针对单个蛋白结构预测做了优化，它会将神经网络编译为恰好适配该序列、MSA 和模板大小的版本。对于大蛋白，编译时间在总运行时间中的占比通常可以忽略；但对于小蛋白，或者当多序列比对已经预先计算好时，编译时间的影响会更明显。在批量推理场景下，可以考虑使用我们的 `make_fixed_size` 函数，将输入填充到统一大小，从而减少编译次数。
 
-We do not provide a bulk inference script, but it should be straightforward to
-develop on top of the `RunModel.predict` method with a parallel system for
-precomputing multi-sequence alignments. Alternatively, this script can be run
-repeatedly with only moderate overhead.
+我们没有提供专门的批量推理脚本，但基于 `RunModel.predict` 方法，再配合一个并行的多序列比对预计算系统，开发起来应该并不困难。另一种做法是重复运行当前脚本，其额外开销也还算可接受。
 
-## Note on CASP14 reproducibility
+## 关于 CASP14 可复现性的说明
 
-AlphaFold's output for a small number of proteins has high inter-run variance,
-and may be affected by changes in the input data. The CASP14 target T1064 is a
-notable example; the large number of SARS-CoV-2-related sequences recently
-deposited changes its MSA significantly. This variability is somewhat mitigated
-by the model selection process; running 5 models and taking the most confident.
+对于少数蛋白，AlphaFold 的输出在不同运行之间会有较高方差，并且可能受到输入数据变化的影响。CASP14 目标 T1064 就是一个典型例子；近期大量与 SARS-CoV-2 相关的序列入库，显著改变了它的 MSA。这种波动在一定程度上会被模型筛选过程缓解，即运行 5 个模型并选择最有信心的结果。
 
-To reproduce the results of our CASP14 system as closely as possible you must
-use the same database versions we used in CASP. These may not match the default
-versions downloaded by our scripts.
+如果你希望尽可能接近地复现我们在 CASP14 系统中的结果，就必须使用与我们当时相同版本的数据库。这些版本可能与我们脚本默认下载的版本并不一致。
 
-For genetics:
+遗传数据库方面：
 
 *   UniRef90:
     [v2020_01](https://ftp.uniprot.org/pub/databases/uniprot/previous_releases/release-2020_01/uniref/)
@@ -666,19 +472,17 @@ For genetics:
 *   Uniclust30: [v2018_08](http://wwwuser.gwdg.de/~compbiol/uniclust/2018_08/)
 *   BFD: [only version available](https://bfd.mmseqs.com/)
 
-For templates:
+模板数据库方面：
 
 *   PDB: (downloaded 2020-05-14)
 *   PDB70:
     [2020-05-13](http://wwwuser.gwdg.de/~compbiol/data/hhsuite/databases/hhsuite_dbs/old-releases/pdb70_from_mmcif_200513.tar.gz)
 
-An alternative for templates is to use the latest PDB and PDB70, but pass the
-flag `--max_template_date=2020-05-14`, which restricts templates only to
-structures that were available at the start of CASP14.
+另一种模板方案是使用最新的 PDB 和 PDB70，但同时传入 `--max_template_date=2020-05-14` 参数，将模板限制为 CASP14 开始时已可用的结构。
 
-## Citing this work
+## 引用本文工作
 
-If you use the code or data in this package, please cite:
+如果你在工作中使用了本软件包中的代码或数据，请引用：
 
 ```bibtex
 @Article{AlphaFold2021,
@@ -693,7 +497,7 @@ If you use the code or data in this package, please cite:
 }
 ```
 
-In addition, if you use the AlphaFold-Multimer mode, please cite:
+此外，如果你使用了 AlphaFold-Multimer 模式，请同时引用：
 
 ```bibtex
 @article {AlphaFold-Multimer2021,
@@ -708,22 +512,15 @@ In addition, if you use the AlphaFold-Multimer mode, please cite:
 }
 ```
 
-## Community contributions
+## 社区贡献
 
-Colab notebooks provided by the community (please note that these notebooks may
-vary from our full AlphaFold system and we did not validate their accuracy):
+以下是社区提供的 Colab 笔记本（请注意，这些笔记本可能与我们的完整 AlphaFold 系统存在差异，我们也没有验证其准确性）：
 
-*   The
-    [ColabFold AlphaFold2 notebook](https://colab.research.google.com/github/sokrypton/ColabFold/blob/main/AlphaFold2.ipynb)
-    by Martin Steinegger, Sergey Ovchinnikov and Milot Mirdita, which uses an
-    API hosted at the Södinglab based on the MMseqs2 server
-    [(Mirdita et al. 2019, Bioinformatics)](https://academic.oup.com/bioinformatics/article/35/16/2856/5280135)
-    for the multiple sequence alignment creation.
+*   [ColabFold AlphaFold2 notebook](https://colab.research.google.com/github/sokrypton/ColabFold/blob/main/AlphaFold2.ipynb)，作者为 Martin Steinegger、Sergey Ovchinnikov 和 Milot Mirdita。它使用了部署在 Södinglab 上、基于 MMseqs2 服务器的 API [(Mirdita et al. 2019, Bioinformatics)](https://academic.oup.com/bioinformatics/article/35/16/2856/5280135) 来生成多序列比对。
 
-## Acknowledgements
+## 致谢
 
-AlphaFold communicates with and/or references the following separate libraries
-and packages:
+AlphaFold 会与下列独立库和软件包交互，或引用它们：
 
 *   [Abseil](https://github.com/abseil/abseil-py)
 *   [Biopython](https://biopython.org)
@@ -746,82 +543,46 @@ and packages:
 *   [Tree](https://github.com/deepmind/tree)
 *   [tqdm](https://github.com/tqdm/tqdm)
 
-We thank all their contributors and maintainers!
+感谢所有相关贡献者和维护者！
 
-## Get in Touch
+## 联系我们
 
-If you have any questions not covered in this overview, please contact the
-AlphaFold team at [alphafold@deepmind.com](mailto:alphafold@deepmind.com).
+如果你有本概览未涵盖的问题，请通过 [alphafold@deepmind.com](mailto:alphafold@deepmind.com) 联系 AlphaFold 团队。
 
-We would love to hear your feedback and understand how AlphaFold has been useful
-in your research. Share your stories with us at
-[alphafold@deepmind.com](mailto:alphafold@deepmind.com).
+我们也非常希望听到你的反馈，并了解 AlphaFold 如何帮助了你的研究。欢迎通过 [alphafold@deepmind.com](mailto:alphafold@deepmind.com) 与我们分享你的故事。
 
-## License and Disclaimer
+## 许可与免责声明
 
-This is not an officially supported Google product.
+这不是 Google 官方支持的产品。
 
-Copyright 2022 DeepMind Technologies Limited.
+版权所有 2022 DeepMind Technologies Limited。
 
-AlphaFold 2 and its output are for theoretical modeling only. They are not
-intended, validated, or approved for clinical use. You should not use the
-AlphaFold 2 or its output for clinical purposes or rely on them for medical or
-other professional advice. Any content regarding those topics is provided for
-informational purposes only and is not a substitute for advice from a qualified
-professional.
+AlphaFold 2 及其输出仅用于理论建模。它们并非为临床用途设计、验证或批准。你不应将 AlphaFold 2 或其输出用于临床目的，也不应将其作为医疗或其他专业建议的依据。凡涉及这些主题的内容均仅供信息参考，不能替代合格专业人士的建议。
 
-Output of AlphaFold 2 are predictions with varying levels of confidence and
-should be interpreted carefully. Use discretion before relying on, publishing,
-downloading or otherwise using AlphaFold 2 and its output.
+AlphaFold 2 的输出属于置信度不一的预测结果，应谨慎解读。在依赖、发布、下载或以其他方式使用 AlphaFold 2 及其输出之前，请自行审慎判断。
 
-### AlphaFold Code License
+### AlphaFold 代码许可证
 
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use
-this file except in compliance with the License. You may obtain a copy of the
-License at https://www.apache.org/licenses/LICENSE-2.0.
+本代码依据 Apache License 2.0 版本（下称 “License”）授权；除非遵守该许可证，否则你不得使用本文件。你可以在 https://www.apache.org/licenses/LICENSE-2.0 获取许可证全文。
 
-Unless required by applicable law or agreed to in writing, software distributed
-under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-CONDITIONS OF ANY KIND, either express or implied. See the License for the
-specific language governing permissions and limitations under the License.
+除非适用法律要求或书面同意，依据许可证分发的软件均按“原样”提供，不附带任何明示或暗示的担保或条件。有关许可证所适用的具体权限与限制，请参阅许可证正文。
 
-### Model Parameters License
+### 模型参数许可证
 
-The AlphaFold parameters are made available under the terms of the Creative
-Commons Attribution 4.0 International (CC BY 4.0) license. You can find details
-at: https://creativecommons.org/licenses/by/4.0/legalcode
+AlphaFold 参数依据 Creative Commons Attribution 4.0 International（CC BY 4.0）许可证提供，详情见：https://creativecommons.org/licenses/by/4.0/legalcode
 
-### Third-party software
+### 第三方软件
 
-Use of the third-party software, libraries or code referred to in the
-[Acknowledgements](#acknowledgements) section above may be governed by separate
-terms and conditions or license provisions. Your use of the third-party
-software, libraries or code is subject to any such terms and you should check
-that you can comply with any applicable restrictions or terms and conditions
-before use.
+上文[致谢](#致谢)部分提及的第三方软件、库或代码，其使用可能受独立的条款、条件或许可证约束。你对这些第三方软件、库或代码的使用受相应条款约束，因此在使用前请确认自己能够遵守相关限制与条件。
 
-### Mirrored Databases
+### 镜像数据库
 
-The following databases have been mirrored by DeepMind, and are available with
-reference to the following:
+以下数据库由 DeepMind 提供了镜像，可参考如下说明：
 
-*   [BFD](https://bfd.mmseqs.com/) (unmodified), by Steinegger M. and Söding J.,
-    available under a
-    [Creative Commons Attribution-ShareAlike 4.0 International License](http://creativecommons.org/licenses/by-sa/4.0/).
+*   [BFD](https://bfd.mmseqs.com/)（未修改版本），作者为 Steinegger M. 和 Söding J.，依据 [Creative Commons Attribution-ShareAlike 4.0 International License](http://creativecommons.org/licenses/by-sa/4.0/) 提供。
 
-*   [BFD](https://bfd.mmseqs.com/) (modified), by Steinegger M. and Söding J.,
-    modified by DeepMind, available under a
-    [Creative Commons Attribution-ShareAlike 4.0 International License](http://creativecommons.org/licenses/by-sa/4.0/).
-    See the Methods section of the
-    [AlphaFold proteome paper](https://www.nature.com/articles/s41586-021-03828-1)
-    for details.
+*   [BFD](https://bfd.mmseqs.com/)（修改版本），原作者为 Steinegger M. 和 Söding J.，由 DeepMind 修改，依据 [Creative Commons Attribution-ShareAlike 4.0 International License](http://creativecommons.org/licenses/by-sa/4.0/) 提供。详情请见 [AlphaFold proteome paper](https://www.nature.com/articles/s41586-021-03828-1) 的 Methods 部分。
 
-*   [Uniref30: v2021_03](http://wwwuser.gwdg.de/~compbiol/uniclust/2021_03/)
-    (unmodified), by Mirdita M. et al., available under a
-    [Creative Commons Attribution-ShareAlike 4.0 International License](http://creativecommons.org/licenses/by-sa/4.0/).
+*   [Uniref30: v2021_03](http://wwwuser.gwdg.de/~compbiol/uniclust/2021_03/)（未修改版本），作者为 Mirdita M. 等，依据 [Creative Commons Attribution-ShareAlike 4.0 International License](http://creativecommons.org/licenses/by-sa/4.0/) 提供。
 
-*   [MGnify: v2022_05](http://ftp.ebi.ac.uk/pub/databases/metagenomics/peptide_database/2022_05/README.txt)
-    (unmodified), by Mitchell AL et al., available free of all copyright
-    restrictions and made fully and freely available for both non-commercial and
-    commercial use under
-    [CC0 1.0 Universal (CC0 1.0) Public Domain Dedication](https://creativecommons.org/publicdomain/zero/1.0/).
+*   [MGnify: v2022_05](http://ftp.ebi.ac.uk/pub/databases/metagenomics/peptide_database/2022_05/README.txt)（未修改版本），作者为 Mitchell AL 等，免除全部版权限制，并依据 [CC0 1.0 Universal (CC0 1.0) Public Domain Dedication](https://creativecommons.org/publicdomain/zero/1.0/) 免费提供给非商业和商业用途使用。

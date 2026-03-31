@@ -1,333 +1,206 @@
-# AlphaFold Protein Structure Database
+# AlphaFold 蛋白质结构数据库
 
-## Introduction
+## 简介
 
-The AlphaFold UniProt release (214M predictions) is hosted on
-[Google Cloud Public Datasets](https://console.cloud.google.com/marketplace/product/bigquery-public-data/deepmind-alphafold),
-and is available to download at no cost under a
-[CC-BY-4.0 licence](http://creativecommons.org/licenses/by/4.0/legalcode). The
-dataset is in a Cloud Storage bucket, and metadata is available on BigQuery. A
-Google Cloud account is required for the download, but the data can be freely
-used under the terms of the
-[CC-BY 4.0 Licence](http://creativecommons.org/licenses/by/4.0/legalcode).
+AlphaFold 的 UniProt 发布版本（2.14 亿条预测）托管在 [Google Cloud Public Datasets](https://console.cloud.google.com/marketplace/product/bigquery-public-data/deepmind-alphafold) 上，并依据 [CC-BY-4.0 许可证](http://creativecommons.org/licenses/by/4.0/legalcode)免费提供下载。数据集存放在 Cloud Storage 存储桶中，元数据可通过 BigQuery 获取。下载需要 Google Cloud 账号，但数据本身可依据 [CC-BY 4.0 许可证](http://creativecommons.org/licenses/by/4.0/legalcode)自由使用。
 
-This document provides an overview of how to access and download the dataset for
-different use cases. Please refer to the [AlphaFold database FAQ](https://www.alphafold.com/faq)
-for further information on what proteins are in the database and a changelog of
-releases.
+本文概述了在不同使用场景下访问和下载该数据集的方法。关于数据库中包含哪些蛋白以及版本更新日志，请参阅 [AlphaFold database FAQ](https://www.alphafold.com/faq)。
 
-:ledger: **Note: The full dataset is difficult to manipulate without significant
-computational resources (the size of the dataset is 23 TiB, 3 * 214M files).**
+:ledger: **注意：完整数据集规模巨大，如无显著计算资源，将很难直接处理（总大小约 23 TiB，共 3 × 2.14 亿个文件）。**
 
-There are also alternatives to downloading the full dataset:
+除了下载完整数据集外，你还可以选择：
 
-1.  Download a premade subset (covering important species / Swiss-Prot) via our
-    [download page](https://alphafold.ebi.ac.uk/download).
-2.  Download a custom subset of the data. See below.
+1.  通过我们的[下载页面](https://alphafold.ebi.ac.uk/download)下载预先整理好的子集（覆盖重要物种 / Swiss-Prot）。
+2.  下载自定义数据子集，详见下文。
 
-If you need to download the full dataset then please see the "Bulk download"
-section. See "Creating a Google Cloud Account" below for more information on how
-to avoid any surprise costs when using Google Cloud Public Datasets.
+如果你确实需要下载完整数据集，请参见“批量下载”一节。关于如何避免使用 Google Cloud Public Datasets 时产生意外费用，请参阅下方“创建 Google Cloud 账号”一节。
 
-## Licence
+## 许可证
 
-Data is available for academic and commercial use, under a
-[CC-BY-4.0 licence](http://creativecommons.org/licenses/by/4.0/legalcode).
+数据可依据 [CC-BY-4.0 许可证](http://creativecommons.org/licenses/by/4.0/legalcode)用于学术和商业用途。
 
-EMBL-EBI expects attribution (e.g. in publications, services or products) for
-any of its online services, databases or software in accordance with good
-scientific practice.
+EMBL-EBI 希望你在使用其在线服务、数据库或软件时，按照良好的科学实践进行适当署名（例如在论文、服务或产品中）。
 
-If you make use of an AlphaFold prediction, please cite the following papers:
+如果你使用了 AlphaFold 预测结果，请引用以下论文：
 
-*   [Jumper, J et al. Highly accurate protein structure prediction with
-    AlphaFold. Nature
-    (2021).](https://www.nature.com/articles/s41586-021-03819-2)
-*   [Varadi, M et al. AlphaFold Protein Structure Database: massively expanding
-    the structural coverage of protein-sequence space with high-accuracy models.
-    Nucleic Acids Research
-    (2021).](https://academic.oup.com/nar/advance-article/doi/10.1093/nar/gkab1061/6430488)
+*   [Jumper, J et al. Highly accurate protein structure prediction with AlphaFold. Nature (2021).](https://www.nature.com/articles/s41586-021-03819-2)
+*   [Varadi, M et al. AlphaFold Protein Structure Database: massively expanding the structural coverage of protein-sequence space with high-accuracy models. Nucleic Acids Research (2021).](https://academic.oup.com/nar/advance-article/doi/10.1093/nar/gkab1061/6430488)
 
-AlphaFold Data Copyright (2022) DeepMind Technologies Limited.
+AlphaFold 数据版权归 DeepMind Technologies Limited 所有（2022）。
 
-## Disclaimer
+## 免责声明
 
-The AlphaFold Data and other information provided on this site is for
-theoretical modelling only, caution should be exercised in its use. It is
-provided 'as-is' without any warranty of any kind, whether expressed or implied.
-For clarity, no warranty is given that use of the information shall not infringe
-the rights of any third party. The information is not intended to be a
-substitute for professional medical advice, diagnosis, or treatment, and does
-not constitute medical or other professional advice.
+AlphaFold 数据及本网站提供的其他信息仅用于理论建模，使用时请务必谨慎。所有内容均按“现状”提供，不附带任何形式的明示或暗示担保。特别说明：我们不保证使用这些信息不会侵犯任何第三方权利。相关信息不能替代专业医学建议、诊断或治疗，也不构成医学或其他专业建议。
 
-## Format
+## 数据格式
 
-Dataset file names start with a protein identifier of the form `AF-[a UniProt
-accession]-F[a fragment number]`.
+数据集文件名以如下形式的蛋白标识符开头：`AF-[UniProt accession]-F[fragment number]`。
 
-Three files are provided for each entry:
+每个条目提供 3 个文件：
 
-*   **model_v4.cif** – contains the atomic coordinates for the predicted protein
-    structure, along with some metadata. Useful references for this file format
-    are the [ModelCIF](https://github.com/ihmwg/ModelCIF) and
-    [PDBx/mmCIF](https://mmcif.wwpdb.org) project sites.
-*   **confidence_v4.json** – contains a confidence metric output by AlphaFold
-    called pLDDT. This provides a number for each residue, indicating how
-    confident AlphaFold is in the *local* surrounding structure. pLDDT ranges
-    from 0 to 100, where 100 is most confident. This is also contained in the
-    CIF file.
-*   **predicted_aligned_error_v4.json** – contains a confidence metric output by
-    AlphaFold called PAE. This provides a number for every pair of residues,
-    which is lower when AlphaFold is more confident in the relative position of
-    the two residues. PAE is more suitable than pLDDT for judging confidence in 
-    relative domain placements.
-    [See here](https://alphafold.ebi.ac.uk/faq#faq-7) for a description of the
-    format.
+*   **model_v4.cif**：包含预测蛋白结构的原子坐标及部分元数据。该格式的参考资料可见 [ModelCIF](https://github.com/ihmwg/ModelCIF) 和 [PDBx/mmCIF](https://mmcif.wwpdb.org)。
+*   **confidence_v4.json**：包含 AlphaFold 输出的置信度指标 pLDDT。它为每个残基提供一个数值，用于表示 AlphaFold 对该残基局部周围结构的置信度。pLDDT 的取值范围是 0 到 100，其中 100 表示置信度最高。该信息同时也保存在 CIF 文件中。
+*   **predicted_aligned_error_v4.json**：包含 AlphaFold 输出的置信度指标 PAE。它为每一对残基提供一个数值；该值越小，表示 AlphaFold 对这两个残基相对位置越有信心。与 pLDDT 相比，PAE 更适合用于判断不同结构域相对排布的置信度。格式说明可见 [这里](https://alphafold.ebi.ac.uk/faq#faq-7)。
 
-Predictions grouped by NCBI taxonomy ID are available as
-`proteomes/proteome-tax_id-[TAX ID]-[SHARD ID]_v4.tar` within the same
-bucket.
+按 NCBI taxonomy ID 分组的预测结果可在同一存储桶中以 `proteomes/proteome-tax_id-[TAX ID]-[SHARD ID]_v4.tar` 的形式获取。
 
-There are also two extra files stored in the bucket:
+存储桶中还额外提供两个文件：
 
-*   `accession_ids.csv` – This file contains a list of all the UniProt
-    accessions that have predictions in AlphaFold DB. The file is in CSV format
-    and includes the following columns, separated by a comma:
-    *   UniProt accession, e.g. A8H2R3
-    *   First residue index (UniProt numbering), e.g. 1
-    *   Last residue index (UniProt numbering), e.g. 199
-    *   AlphaFold DB identifier, e.g. AF-A8H2R3-F1
-    *   Latest version, e.g. 4
-*   `sequences.fasta` – This file contains sequences for all proteins in the
-    current database version in FASTA format. The identifier rows start with
-    ">AFDB", followed by the AlphaFold DB identifier and the name of the
-    protein. The sequence rows contain the corresponding amino acid sequences.
-    Each sequence is on a single line, i.e. there is no wrapping.
+*   `accession_ids.csv`：包含 AlphaFold DB 中所有已有预测结果的 UniProt accession 列表。该 CSV 文件包含以下列（逗号分隔）：
+    *   UniProt accession，例如 `A8H2R3`
+    *   第一个残基索引（UniProt 编号），例如 `1`
+    *   最后一个残基索引（UniProt 编号），例如 `199`
+    *   AlphaFold DB 标识符，例如 `AF-A8H2R3-F1`
+    *   最新版本号，例如 `4`
+*   `sequences.fasta`：包含当前数据库版本中所有蛋白的 FASTA 序列。标识行以 `>AFDB` 开头，后接 AlphaFold DB 标识符和蛋白名称；序列行为对应的氨基酸序列。每条序列均单独占一行，不做换行折叠。
 
-## Creating a Google Cloud Account
+## 创建 Google Cloud 账号
 
-Downloading from the Google Cloud Public Datasets (rather than from AFDB or 3D
-Beacons) requires a Google Cloud account. See the
-[Google Cloud get started](https://cloud.google.com/docs/get-started) page, and
-explore the [free tier account usage limits](https://cloud.google.com/free).
+如果你希望从 Google Cloud Public Datasets 下载数据（而不是从 AFDB 或 3D Beacons 获取），则需要一个 Google Cloud 账号。请参阅 [Google Cloud get started](https://cloud.google.com/docs/get-started) 页面，并了解其 [免费层使用限制](https://cloud.google.com/free)。
 
-**IMPORTANT: After the trial period has finished (90 days), to continue access,
-you are required to upgrade to a billing account. While your free tier access
-(including access to the Public Datasets storage bucket) continues, usage beyond
-the free tier will incur costs – please familiarise yourself with the pricing
-for the services that you use to avoid any surprises.**
+**重要：试用期结束（90 天）后，如需继续访问，你必须升级到可计费账号。即使你仍可继续使用免费层（包括访问 Public Datasets 存储桶），超出免费额度的使用仍会产生费用。因此请务必提前熟悉你所使用服务的计费方式。**
 
-1.  Go to
-    [https://cloud.google.com/datasets](https://cloud.google.com/datasets).
-2.  Create an account:
-    1.  Click "get started for free" in the top right corner.
-    2.  Agree to all terms of service.
-    3.  Follow the setup instructions. Note that a payment method is required,
-        but this will not be used unless you enable billing.
-    4.  Access to the Google Cloud Public Datasets storage bucket is always at
-        no cost and you will have access to the
-        [free tier.](https://cloud.google.com/free/docs/gcp-free-tier#free-tier-usage-limits)
-3.  Set up a project:
-    1.  In the top left corner, click the navigation menu (three horizontal bars
-        icon).
-    2.  Select: "Cloud overview" -> "Dashboard".
-    3.  In the top left corner there is a project menu bar (likely says "My
-        First Project"). Select this and a "Select a Project" box will appear.
-    4.  To keep using this project, click "Cancel" at the bottom of the box.
-    5.  To create a new project, click "New Project" at the top of the box:
-        1.  Select a project name.
-        2.  For location, if your organization has a Cloud account then select
-            this, otherwise leave as is.
-4.  Install `gsutil`:
-    1.  Follow these
-        [instructions](https://cloud.google.com/storage/docs/gsutil_install).
+1.  打开 [https://cloud.google.com/datasets](https://cloud.google.com/datasets)。
+2.  创建账号：
+    1.  点击右上角的 “get started for free”。
+    2.  同意所有服务条款。
+    3.  按提示完成设置。请注意，系统会要求你提供支付方式，但除非你启用了计费，否则不会扣费。
+    4.  访问 Google Cloud Public Datasets 存储桶本身始终免费，你也将拥有 [free tier](https://cloud.google.com/free/docs/gcp-free-tier#free-tier-usage-limits) 权限。
+3.  设置项目：
+    1.  点击左上角导航菜单（三横线图标）。
+    2.  选择 “Cloud overview” -> “Dashboard”。
+    3.  左上角会有一个项目菜单栏（通常显示 “My First Project”），点击后会弹出 “Select a Project” 对话框。
+    4.  若要继续使用当前项目，点击对话框底部的 “Cancel”。
+    5.  若要创建新项目，点击对话框顶部的 “New Project”：
+        1.  选择项目名称。
+        2.  对于 location，如果你的组织已有 Cloud 账号可选择该位置，否则保持默认即可。
+4.  安装 `gsutil`：
+    1.  按照[这里的说明](https://cloud.google.com/storage/docs/gsutil_install)进行安装。
 
-## Accessing the dataset
+## 访问数据集
 
-The data is available from:
+数据可从以下位置获取：
 
-*   GCS data bucket:
+*   GCS 数据存储桶：
     [gs://public-datasets-deepmind-alphafold-v4](https://console.cloud.google.com/storage/browser/public-datasets-deepmind-alphafold-v4)
 
-## Bulk download
+## 批量下载
 
-We don't recommend downloading the full dataset unless required for processing
-with local computational resources, for example in an academic high performance
-computing centre.
+除非你确实需要在本地计算资源上处理完整数据集（例如学术高性能计算中心），否则我们并不推荐下载整个数据集。
 
-We estimate that a 1 Gbps internet connection will allow download of the full
-database in roughly 2.5 days.
+我们估计，在 1 Gbps 网络条件下，下载完整数据库大约需要 2.5 天。
 
-While we don’t know the exact nature of your computational infrastructure, below
-are some suggested approaches for downloading the dataset. Please reach out to
-[alphafold@deepmind.com](mailto:alphafold@deepmind.com) if you have any
-questions.
+虽然我们不了解你的计算基础设施细节，但下面给出一些建议的下载方式。如有问题，请通过 [alphafold@deepmind.com](mailto:alphafold@deepmind.com) 联系我们。
 
-The recommended way of downloading the whole database is by downloading
-1,015,797 sharded proteome tar files using the command below. This is
-significantly faster than downloading all of the individual files because of
-large constant per-file latency.
+推荐的整库下载方式，是使用下列命令下载 1,015,797 个按蛋白质组切分的 tar 分片文件。与逐个下载单文件相比，这种方式快得多，因为它能显著降低单文件固定延迟带来的开销。
 
 ```bash
 gsutil -m cp -r gs://public-datasets-deepmind-alphafold-v4/proteomes/ .
 ```
 
-You will then have to un-tar all of the proteomes and un-gzip all of the
-individual files. Note that after un-taring, there will be about 644M files, so
-make sure your filesystem can handle this.
+下载完成后，你需要解包所有蛋白质组 tar 文件，并对其中的单个文件执行 gunzip。请注意，解包后大约会产生 6.44 亿个文件，因此请确认你的文件系统能够承受该规模。
 
 ### Storage Transfer Service
 
-Some users might find the
-[Storage Transfer Service](https://cloud.google.com/storage-transfer-service) a
-convenient way to set up the transfer between this bucket and another bucket, or
-another cloud service. *Using this service may incur costs*. Please check the
-[pricing page](https://cloud.google.com/storage-transfer/pricing) for more
-detail, particularly for transfers to other cloud services.
+部分用户可能会觉得 [Storage Transfer Service](https://cloud.google.com/storage-transfer-service) 很方便，可用于在本存储桶与另一个存储桶或其他云服务之间建立传输。*使用该服务可能产生费用*。详情请参阅其 [pricing page](https://cloud.google.com/storage-transfer/pricing)，尤其是传输到其他云服务时的计费说明。
 
-## Downloading subsets of the data
+## 下载数据子集
 
-### AlphaFold Database search
+### AlphaFold Database 搜索
 
-For simple queries, for example by protein name, gene name or UniProt accession
-you can use the main search bar on
-[alphafold.ebi.ac.uk](https://alphafold.ebi.ac.uk).
+对于较简单的查询，例如按蛋白名称、基因名称或 UniProt accession 搜索，你可以直接使用 [alphafold.ebi.ac.uk](https://alphafold.ebi.ac.uk) 的主搜索栏。
 
 ### 3D Beacons
 
-[3D-Beacons](https://3d-beacons.org) is an international collaboration of
-protein structure data providers to create a federated network with unified data
-access mechanisms. The 3D-Beacons platform allows users to retrieve coordinate
-files and metadata of experimentally determined and theoretical protein models
-from data providers such as AlphaFold DB.
+[3D-Beacons](https://3d-beacons.org) 是一个国际合作项目，由多个蛋白结构数据提供方共同构建统一数据访问机制的联邦网络。3D-Beacons 平台允许用户从 AlphaFold DB 等数据提供方获取实验测定或理论预测蛋白模型的坐标文件和元数据。
 
-More information about how to access AlphaFold predictions using 3D-Beacons is
-available at
-[3D-Beacons documentation](https://www.ebi.ac.uk/pdbe/pdbe-kb/3dbeacons/docs).
+关于如何通过 3D-Beacons 获取 AlphaFold 预测结果，详见 [3D-Beacons documentation](https://www.ebi.ac.uk/pdbe/pdbe-kb/3dbeacons/docs)。
 
-### Other premade species subsets
+### 其他预制物种子集
 
-Downloads for some model organism proteomes, global health proteomes and
-Swiss-Prot are available on the
-[AFDB website](https://alphafold.ebi.ac.uk/download). These are generated from
-[reference proteomes](https://www.uniprot.org/help/reference_proteome). If you
-want other species, or *all* proteins for a particular species, please continue
-reading.
+部分模式生物蛋白质组、全球健康相关蛋白质组和 Swiss-Prot 子集可在 [AFDB 网站](https://alphafold.ebi.ac.uk/download) 下载。这些数据基于 [reference proteomes](https://www.uniprot.org/help/reference_proteome) 生成。如果你需要其他物种，或者某一物种的 *全部* 蛋白，请继续阅读。
 
-We provide 1,015,797 sharded tar files for all species in
-[gs://public-datasets-deepmind-alphafold-v4/proteomes/](https://console.cloud.google.com/storage/browser/public-datasets-deepmind-alphafold-v4/proteomes/).
-We shard each proteome so that each shard contains at most 10,000 proteins
-(which corresponds to 30,000 files per shard, since there are 3 files per
-protein). To download a proteome of your choice, you have to do the following
-steps:
+我们为所有物种提供了 1,015,797 个分片 tar 文件，地址为 [gs://public-datasets-deepmind-alphafold-v4/proteomes/](https://console.cloud.google.com/storage/browser/public-datasets-deepmind-alphafold-v4/proteomes/)。我们对每个蛋白质组进行了分片，保证每个分片最多包含 10,000 个蛋白（由于每个蛋白有 3 个文件，因此每个分片最多约 30,000 个文件）。如果你要下载某个蛋白质组，请按以下步骤操作：
 
-1.  Find the [NCBI taxonomy ID](https://www.ncbi.nlm.nih.gov/taxonomy)
-    (`[TAX_ID]`) of the species in question.
-2.  Run `gsutil -m cp
-    gs://public-datasets-deepmind-alphafold-v4/proteomes/proteome-tax_id-[TAX
-    ID]-*_v4.tar .` to download all shards for this proteome.
-3.  Un-tar all of the downloaded files and un-gzip all of the individual files.
+1.  查找目标物种的 [NCBI taxonomy ID](https://www.ncbi.nlm.nih.gov/taxonomy)（`[TAX_ID]`）。
+2.  运行 `gsutil -m cp gs://public-datasets-deepmind-alphafold-v4/proteomes/proteome-tax_id-[TAX_ID]-*_v4.tar .` 下载该蛋白质组的全部分片。
+3.  解包所有下载的文件，并对内部单文件执行 gunzip。
 
-### File manifests
+### 文件清单
 
-Pre-made lists of files (manifests) are available at
-[gs://public-datasets-deepmind-alphafold-v4/manifests](https://console.cloud.google.com/storage/browser/public-datasets-deepmind-alphafold-v4/manifests/).
-Note that these filenames do not include the bucket prefix, but this can be
-added once the files have been downloaded to your filesystem.
+预制好的文件清单（manifest）可在 [gs://public-datasets-deepmind-alphafold-v4/manifests](https://console.cloud.google.com/storage/browser/public-datasets-deepmind-alphafold-v4/manifests/) 获取。请注意，这些文件名本身不包含存储桶前缀；下载到本地后，你可以自行补上。
 
-One can also define their own list of files, for example created by BigQuery
-(see below). `gsutil` can be used to download these files with
+你也可以定义自己的文件列表，例如通过 BigQuery 生成。之后可使用 `gsutil` 批量下载：
 
 ```bash
 cat [manifest file] | gsutil -m cp -I .
 ```
 
-This will be much slower than downloading the tar files (grouped by species)
-because each file has an associated overhead.
+这种方式会比下载按物种打包的 tar 文件慢得多，因为每个文件都有单独的固定开销。
 
 ### BigQuery
 
-**IMPORTANT: The
-[free tier](https://cloud.google.com/bigquery/pricing#free-tier) of Google Cloud
-comes with [BigQuery Sandbox](https://cloud.google.com/bigquery/docs/sandbox)
-with 1 TB of free processed query data each month. Repeated queries within a
-month could exceed this limit and if you have
-[upgraded to a paid Cloud Billing account](https://cloud.google.com/free/docs/gcp-free-tier#how-to-upgrade)
-you may be charged.**
+**重要：Google Cloud 的 [free tier](https://cloud.google.com/bigquery/pricing#free-tier) 包含 [BigQuery Sandbox](https://cloud.google.com/bigquery/docs/sandbox)，每月可免费处理 1 TB 查询数据。如果你在一个月内反复执行查询，可能超出该上限；若你已[升级为付费 Cloud Billing 账号](https://cloud.google.com/free/docs/gcp-free-tier#how-to-upgrade)，则可能产生费用。**
 
-**This should be sufficient for running a number of queries on the metadata
-table, though the usage depends on the size of the columns queried and selected.
-Please look at the
-[BigQuery pricing page](https://cloud.google.com/bigquery/pricing) for more
-information.**
+**通常这足以支持对元数据表执行若干次查询，但实际消耗仍取决于你查询与选择的列大小。更多细节请参阅 [BigQuery pricing page](https://cloud.google.com/bigquery/pricing)。**
 
-**This is the user's responsibility so please ensure you keep track of your
-billing settings and resource usage in the console.**
+**这部分费用由用户自行负责，因此请务必在控制台中持续关注你的计费设置与资源用量。**
 
-BigQuery provides a serverless and highly scalable analytics tool enabling SQL
-queries over large datasets. The metadata for the UniProt dataset takes up ​​113
-GiB and so can be challenging to process and analyse locally. The table name is:
+BigQuery 是一种无服务器、高可扩展的分析工具，可用于对大型数据集执行 SQL 查询。UniProt 数据集对应的元数据约占 113 GiB，因此在本地处理和分析会比较困难。对应的数据表名如下：
 
-*   BigQuery metadata table:
+*   BigQuery 元数据表：
     [bigquery-public-data.deepmind_alphafold.metadata](https://console.cloud.google.com/bigquery?project=bigquery-public-data&ws=!1m5!1m4!4m3!1sbigquery-public-data!2sdeepmind_alphafold!3smetadata)
 
-With BigQuery SQL you can do complex queries, e.g. find all high accuracy
-predictions for a particular species, or even join on to other datasets, e.g. to
-an experimental dataset by the `uniprotSequence`, or to the NCBI taxonomy by
-`taxId`.
+通过 BigQuery SQL，你可以执行复杂查询，例如找出某一物种中所有高精度预测，甚至可以与其他数据集联结，例如通过 `uniprotSequence` 与实验数据集联结，或通过 `taxId` 与 NCBI taxonomy 联结。
 
-If you would find additional information in the metadata useful please file a
-GitHub issue.
+如果你觉得元数据中还应增加其他有用信息，欢迎提交 GitHub issue。
 
-#### Setup
+#### 配置
 
-Follow the
-[BigQuery Sandbox set up guide](https://cloud.google.com/bigquery/docs/sandbox).
+请按照 [BigQuery Sandbox set up guide](https://cloud.google.com/bigquery/docs/sandbox) 完成配置。
 
-#### Exploring the metadata
+#### 探索元数据
 
-The column names and associated data types available can be found using the
-following query.
+可使用以下查询查看可用列名及其数据类型：
 
 ```sql
 SELECT column_name, data_type FROM bigquery-public-data.deepmind_alphafold.INFORMATION_SCHEMA.COLUMNS
 WHERE table_name = 'metadata'
 ```
 
-**Column name**        | **Data type**   | **Description**
----------------------- | --------------- | ---------------
-allVersions            | `ARRAY<INT64>`  | An array of AFDB versions this prediction has had
-entryId                | `STRING`        | The AFDB entry ID, e.g. "AF-Q1HGU3-F1"
-fractionPlddtConfident | `FLOAT64`       | Fraction of the residues in the prediction with pLDDT between 70 and 90
-fractionPlddtLow       | `FLOAT64`       | Fraction of the residues in the prediction with pLDDT between 50 and 70
-fractionPlddtVeryHigh  | `FLOAT64`       | Fraction of the residues in the prediction with pLDDT greater than 90
-fractionPlddtVeryLow   | `FLOAT64`       | Fraction of the residues in the prediction with pLDDT less than 50
-gene                   | `STRING`        | The name of the gene if known, e.g. "COII"
-geneSynonyms           | `ARRAY<STRING>` | Additional synonyms for the gene
-globalMetricValue      | `FLOAT64`       | The mean pLDDT of this prediction
-isReferenceProteome    | `BOOL`          | Is this protein part of the reference proteome?
-isReviewed             | `BOOL`          | Has this protein been reviewed, i.e. is it part of SwissProt?
-latestVersion          | `INT64`         | The latest AFDB version for this prediction
-modelCreatedDate       | `DATE`          | The date of creation for this entry, e.g. "2022-06-01"
-organismCommonNames    | `ARRAY<STRING>` | List of common organism names
-organismScientificName | `STRING`        | The scientific name of the organism
-organismSynonyms       | `ARRAY<STRING>` | List of synonyms for the organism
-proteinFullNames       | `ARRAY<STRING>` | Full names of the protein
-proteinShortNames      | `ARRAY<STRING>` | Short names of the protein
-sequenceChecksum       | `STRING`        | [CRC64 hash](https://www.uniprot.org/help/checksum) of the sequence. Can be used for cheaper lookups.
-sequenceVersionDate    | `DATE`          | Date when the sequence data was last modified in UniProt
-taxId                  | `INT64`         | NCBI taxonomy id of the originating species
-uniprotAccession       | `STRING`        | Uniprot accession ID
-uniprotDescription     | `STRING`        | The name recommended by the UniProt consortium
-uniprotEnd             | `INT64`         | Number of the last residue in the entry relative to the UniProt entry. This is equal to the length of the protein unless we are dealing with protein fragments.
-uniprotId              | `STRING`        | The Uniprot EntryName field
-uniprotSequence        | `STRING`        | Amino acid sequence for this prediction
-uniprotStart           | `INT64`         | Number of the first residue in the entry relative to the UniProt entry. This is 1 unless we are dealing with protein fragments.
+**列名**               | **数据类型**      | **说明**
+---------------------- | ----------------- | -----------------
+allVersions            | `ARRAY<INT64>`    | 该预测曾出现过的 AFDB 版本数组
+entryId                | `STRING`          | AFDB 条目标识符，例如 `"AF-Q1HGU3-F1"`
+fractionPlddtConfident | `FLOAT64`         | pLDDT 介于 70 到 90 的残基占比
+fractionPlddtLow       | `FLOAT64`         | pLDDT 介于 50 到 70 的残基占比
+fractionPlddtVeryHigh  | `FLOAT64`         | pLDDT 大于 90 的残基占比
+fractionPlddtVeryLow   | `FLOAT64`         | pLDDT 小于 50 的残基占比
+gene                   | `STRING`          | 基因名称（若已知），例如 `"COII"`
+geneSynonyms           | `ARRAY<STRING>`   | 基因的其他别名
+globalMetricValue      | `FLOAT64`         | 该预测的平均 pLDDT
+isReferenceProteome    | `BOOL`            | 是否属于参考蛋白质组
+isReviewed             | `BOOL`            | 是否经过人工审阅，即是否属于 Swiss-Prot
+latestVersion          | `INT64`           | 该预测的最新 AFDB 版本
+modelCreatedDate       | `DATE`            | 该条目的创建日期，例如 `"2022-06-01"`
+organismCommonNames    | `ARRAY<STRING>`   | 物种常用名称列表
+organismScientificName | `STRING`          | 物种学名
+organismSynonyms       | `ARRAY<STRING>`   | 物种别名列表
+proteinFullNames       | `ARRAY<STRING>`   | 蛋白全名列表
+proteinShortNames      | `ARRAY<STRING>`   | 蛋白简称列表
+sequenceChecksum       | `STRING`          | 序列的 [CRC64 hash](https://www.uniprot.org/help/checksum)，可用于成本更低的查找
+sequenceVersionDate    | `DATE`            | UniProt 中该序列最近修改日期
+taxId                  | `INT64`           | 来源物种的 NCBI taxonomy ID
+uniprotAccession       | `STRING`          | UniProt accession ID
+uniprotDescription     | `STRING`          | UniProt 联盟推荐名称
+uniprotEnd             | `INT64`           | 该条目在 UniProt 条目中的最后一个残基编号。若非蛋白片段，则通常等于蛋白长度
+uniprotId              | `STRING`          | UniProt EntryName 字段
+uniprotSequence        | `STRING`          | 该预测对应的氨基酸序列
+uniprotStart           | `INT64`           | 该条目在 UniProt 条目中的第一个残基编号。若非蛋白片段，则通常为 1
 
-#### Producing summary statistics
+#### 生成汇总统计
 
-The following query gives the mean of the prediction confidence fractions per
-species.
+下面的查询可给出每个物种在不同置信度区间上的平均预测占比：
 
 ```sql
 SELECT
@@ -342,12 +215,9 @@ GROUP by name
 ORDER BY num_predictions DESC;
 ```
 
-#### Producing lists of files
+#### 生成文件列表
 
-We expect that the most important use for the metadata will be to create subsets
-of proteins according to various criteria, so that users can choose to only copy
-a subset of the 214M proteins that exist in the dataset. An example query is
-given below:
+我们预计，元数据最重要的用途之一，是按不同条件筛选蛋白子集，以便用户只复制数据集中 2.14 亿个蛋白中的一小部分。下面给出一个示例查询：
 
 ```sql
 with file_rows AS (
@@ -365,26 +235,12 @@ SELECT CONCAT('gs://public-datasets-deepmind-alphafold-v4/', files) as files
 from file_rows
 ```
 
-In this case, the list has been filtered to only include proteins from *Homo
-sapiens* for which over half the residues are confident or better (>70 pLDDT).
+在这个例子中，列表被筛选为仅包含 *Homo sapiens*（人类）中“超过一半残基置信度达到 confident 或更高（>70 pLDDT）”的蛋白。
 
-This creates a table with one column "files", where each row is the cloud
-location of one of the two file types that has been provided for each protein.
-There is an additional `confidence_v4.json` file which contains the
-per-residue pLDDT. This information is already in the CIF file but may be
-preferred if only this information is required.
+该查询会生成一个名为 `"files"` 的单列表格，其中每一行都是该蛋白对应的两个文件类型之一在云端的位置。除此之外，还有一个额外的 `confidence_v4.json` 文件，里面保存了每残基 pLDDT 信息。虽然这些信息已经存在于 CIF 文件中，但如果你只需要该项信息，也可以优先使用这个 JSON。
 
-This allows users to bulk download the exact proteins they need, without having
-to download the entire dataset. Other columns may also be used to select subsets
-of proteins, and we point the user to the
-[BigQuery documentation](https://cloud.google.com/bigquery/docs) to understand
-other ways to filter for their desired protein lists. Likewise, the
-documentation should be followed to download these file subsets locally, as the
-most appropriate approach will depend on the filesize. Note that it may be
-easier to download large files using [Colab](https://colab.research.google.com/)
-(e.g. pandas to_csv).
+这样，用户就能只下载自己真正需要的蛋白，而无需下载整个数据集。你也可以利用其他列来筛选蛋白子集；有关更多筛选方式，请参阅 [BigQuery documentation](https://cloud.google.com/bigquery/docs)。下载这些子集到本地时，也建议遵循官方文档，因为最佳方案通常取决于文件大小。在某些情况下，使用 [Colab](https://colab.research.google.com/) 下载大型文件可能更方便（例如借助 pandas 的 `to_csv`）。
 
-#### Previous versions
-Previous versions of AFDB will remain available at
-[gs://public-datasets-deepmind-alphafold](https://console.cloud.google.com/storage/browser/public-datasets-deepmind-alphafold)
-to enable reproducible research. We recommend using the latest version (v4).
+#### 历史版本
+
+AFDB 的历史版本会继续保留在 [gs://public-datasets-deepmind-alphafold](https://console.cloud.google.com/storage/browser/public-datasets-deepmind-alphafold) 中，以支持可复现研究。我们建议优先使用最新版本（v4）。

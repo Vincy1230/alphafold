@@ -14,18 +14,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Downloads and unzips the PDB SeqRes database for AlphaFold.
+# 下载并解压 AlphaFold 所需的 PDB SeqRes 数据库。
 #
-# Usage: bash download_pdb_seqres.sh /path/to/download/directory
+# 用法：bash download_pdb_seqres.sh /path/to/download/directory
 set -e
 
 if [[ $# -eq 0 ]]; then
-    echo "Error: download directory must be provided as an input argument."
+    echo "错误：必须提供下载目录作为输入参数。"
     exit 1
 fi
 
 if ! command -v aria2c &> /dev/null ; then
-    echo "Error: aria2c could not be found. Please install aria2c (sudo apt install aria2)."
+    echo "错误：找不到 aria2c。请先安装 aria2c（sudo apt install aria2）。"
     exit 1
 fi
 
@@ -37,6 +37,6 @@ BASENAME=$(basename "${SOURCE_URL}")
 mkdir --parents "${ROOT_DIR}"
 aria2c "${SOURCE_URL}" --dir="${ROOT_DIR}"
 
-# Keep only protein sequences.
+# 仅保留蛋白质序列。
 grep --after-context=1 --no-group-separator '>.* mol:protein' "${ROOT_DIR}/pdb_seqres.txt" > "${ROOT_DIR}/pdb_seqres_filtered.txt"
 mv "${ROOT_DIR}/pdb_seqres_filtered.txt" "${ROOT_DIR}/pdb_seqres.txt"

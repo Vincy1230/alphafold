@@ -1,43 +1,24 @@
-# JSON file format for AlphaFold Server jobs
+# AlphaFold Server 作业的 JSON 文件格式
 
-You can
-[download an example JSON file here](https://github.com/google-deepmind/alphafold/blob/main/server/example.json);
-here we describe the contents of this example JSON file.
+你可以[在这里下载示例 JSON 文件](https://github.com/google-deepmind/alphafold/blob/main/server/example.json)；下面将说明该示例 JSON 文件的内容。
 
-This JSON file consists of a list of dictionaries (even in the case of a single
-dictionary, a single-element list must be used), with each dictionary containing
-a job description. Therefore, you can specify multiple jobs in one JSON file.
+这个 JSON 文件由一个字典列表组成（即使只有一个字典，也必须放在单元素列表中），列表中的每个字典都包含一个作业描述。因此，你可以在一个 JSON 文件中定义多个作业。
 
-Each job description contains a job name, a list of PRNG seeds (which can be an
-empty list for automated random seed assignment), and a list of entities
-(molecules) to be modeled.
+每个作业描述都包含一个作业名称、一组 PRNG 种子（也可以为空列表，表示自动分配随机种子），以及一个待建模实体（分子）的列表。
 
-AlphaFold Server JSON files are especially useful for automation of repetitive
-modeling jobs (e.g. to screen interactions of one protein with a small number of
-others). The easiest way to construct an initial JSON file is to run a modeling
-job via AlphaFold Server GUI and use it as a template. AlphaFold Server will
-produce a zip file containing modeling results. Inside the zip file you will
-find a JSON file named `<job_name>_job_request.json` containing the job inputs.
-These files offer a convenient starting point for generating new jobs as they
-are easily editable in standard text editors or in programming environments like
-Google Colab notebooks.
+AlphaFold Server 的 JSON 文件特别适合自动化重复性的建模任务（例如筛选一个蛋白与少量其他蛋白之间的相互作用）。构建初始 JSON 文件最简单的方法，是先通过 AlphaFold Server 图形界面运行一次建模作业，并将其作为模板。AlphaFold Server 会生成一个包含建模结果的 zip 文件；在 zip 文件中，你会找到一个名为 `<job_name>_job_request.json` 的 JSON 文件，其中包含作业输入。这些文件非常适合作为生成新作业的起点，因为它们既可在标准文本编辑器中方便地修改，也可在 Google Colab 笔记本等编程环境中编辑。
 
-Note that comments are not allowed in JSON files.
+请注意，JSON 文件中不允许出现注释。
 
-## Job name, seeds and sequences
+## 作业名称、种子与序列
 
-*   `name` is a string with the job name. This is how the job will appear as in
-    the job history table.
-*   `modelSeeds` is a list of strings of uint32 seed values (e.g.
-    `["1593933729", "4273"]`). Seeds are used to run the modeling. We recommend
-    providing an empty list, in which case a single random seed will be used.
-    This is the recommended option.
-*   `sequences` is a list of dictionaries that carry descriptions of the
-    entities (molecules) for modeling.
+*   `name`：字符串类型，表示作业名称。这也是该作业在作业历史表中显示的名称。
+*   `modelSeeds`：uint32 种子值字符串列表（例如 `["1593933729", "4273"]`）。这些种子用于建模运行。我们建议提供空列表，此时系统会使用一个随机种子；这是推荐做法。
+*   `sequences`：一个字典列表，用于描述参与建模的实体（分子）。
 
 ```json
 {
-  "name": "Test Fold Job Number One",
+  "name": "测试折叠任务一",
   "modelSeeds": [],
   "sequences": [...],
   "dialect": "alphafoldserver",
@@ -45,68 +26,45 @@ Note that comments are not allowed in JSON files.
 }
 ```
 
-## Entity types
+## 实体类型
 
-Valid entity types mirror those available in the AlphaFold Server web interface:
+有效的实体类型与 AlphaFold Server Web 界面中可用的类型保持一致：
 
-*   `proteinChain` – used for proteins
-*   `dnaSequence` – used for DNA (single strand)
-*   `rnaSequence` – used for RNA (single strand)
-*   `ligand` – used for allowed ligands
-*   `ion` – used for allowed ions
-*   `dialect` – The dialect of the input JSON. It should be set to
-    `alphafoldserver`
-*   `version` – The version of the input JSON. It should be set to 1. See
-    [versions](#versions) below for more information.
+*   `proteinChain`：用于蛋白质
+*   `dnaSequence`：用于 DNA（单链）
+*   `rnaSequence`：用于 RNA（单链）
+*   `ligand`：用于允许的配体
+*   `ion`：用于允许的离子
+*   `dialect`：输入 JSON 的方言类型，应设置为 `alphafoldserver`
+*   `version`：输入 JSON 的版本号，应设置为 1。更多信息见下方[版本](#版本)一节。
 
-## Versions
+## 版本
 
-The top-level `version` field (for the `alphafoldserver` dialect) can be either
-`undefined` or `1`. The following features have been added in respective
-versions:
+顶层 `version` 字段（针对 `alphafoldserver` 方言）可以是 `undefined` 或 `1`。不同版本中新增的特性如下：
 
-*   Not set: the initial AlphaFold Server input format.
-*   `1`: added the option of specifying external templates using newly added
-    fields `maxTemplateDate` and `useStructureTemplate`.
+*   未设置：AlphaFold Server 最初的输入格式。
+*   `1`：新增了通过 `maxTemplateDate` 和 `useStructureTemplate` 字段指定外部模板的能力。
 
-### Protein chains
+### 蛋白链
 
-`sequence` is a string containing protein sequence; the same limitations as in
-the UI are in place, e.g. only letters corresponding to amino acids are allowed,
-as defined by IUPAC. Only 20 standard amino acid type are supported.
+`sequence` 是一个包含蛋白质序列的字符串；限制条件与界面中一致，例如只允许使用 IUPAC 定义的氨基酸字母。目前仅支持 20 种标准氨基酸类型。
 
-`count` is the number of copies of this protein chain (integer).
+`count` 是该蛋白链的拷贝数量（整数）。
 
-`glycans` is an optional list of dictionaries that carries descriptions of the
-protein glycosylation.
+`glycans` 是一个可选字典列表，用于描述蛋白糖基化。
 
-*   `residues` is a string defining glycan. Please refer to the
-    [FAQ](https://alphafoldserver.com/faq) for the format description and
-    allowed glycans.
-*   `position` is a position of the amino acid to which the glycan is attached
-    (integer, 1-based indexing).
+*   `residues`：定义聚糖的字符串。具体格式及允许的聚糖请参见 [FAQ](https://alphafoldserver.com/faq)。
+*   `position`：聚糖连接到的氨基酸位置（整数，1 起始计数）。
 
-`modifications` is an optional list of dictionaries that carries descriptions of
-the post-translational modifications.
+`modifications` 是一个可选字典列表，用于描述翻译后修饰。
 
-*   `ptmType` is a string containing the
-    [CCD code](https://www.wwpdb.org/data/ccd) of the modification; the same
-    codes are allowed as in the UI.
-*   `position` is a position of the modified amino acid (integer).
-*   Allowed modifications: `CCD_SEP`, `CCD_TPO`, `CCD_PTR`, `CCD_NEP`,
-    `CCD_HIP`, `CCD_ALY`, `CCD_MLY`, `CCD_M3L`, `CCD_MLZ`, `CCD_2MR`, `CCD_AGM`,
-    `CCD_MCS`, `CCD_HYP`, `CCD_HY3`, `CCD_LYZ`, `CCD_AHB`, `CCD_P1L`, `CCD_SNN`,
-    `CCD_SNC`, `CCD_TRF`, `CCD_KCR`, `CCD_CIR`, `CCD_YHA`
+*   `ptmType`：字符串，表示修饰对应的 [CCD 代码](https://www.wwpdb.org/data/ccd)；允许的代码与界面一致。
+*   `position`：被修饰氨基酸的位置（整数）。
+*   允许的修饰：`CCD_SEP`、`CCD_TPO`、`CCD_PTR`、`CCD_NEP`、`CCD_HIP`、`CCD_ALY`、`CCD_MLY`、`CCD_M3L`、`CCD_MLZ`、`CCD_2MR`、`CCD_AGM`、`CCD_MCS`、`CCD_HYP`、`CCD_HY3`、`CCD_LYZ`、`CCD_AHB`、`CCD_P1L`、`CCD_SNN`、`CCD_SNC`、`CCD_TRF`、`CCD_KCR`、`CCD_CIR`、`CCD_YHA`
 
-`useStructureTemplate` is an optional boolean that determines whether the model
-should use PDB templates, with a default value of `true`.
+`useStructureTemplate` 是可选布尔值，表示模型是否应使用 PDB 模板，默认值为 `true`。
 
-`maxTemplateDate` is an optional ISO 8601 date string (YYYY-MM-DD) specifying
-the upper date limit for considering PDB templates. Only templates released on
-or before this date will be used. The lower bound for the date is 1976-01-01
-(which effectively cuts off all templates) and the maximum date one can
-currently set is 2025-02-03 (date of last download from PDB used to generate the
-templates).
+`maxTemplateDate` 是可选的 ISO 8601 日期字符串（YYYY-MM-DD），用于指定考虑 PDB 模板时的日期上限。只有在该日期或之前发布的模板会被使用。该日期的最小值为 1976-01-01（相当于切断所有模板），当前可设置的最大日期为 2025-02-03（用于生成模板时从 PDB 下载数据的最后日期）。
 
 ```json
 {
@@ -148,26 +106,19 @@ templates).
 }
 ```
 
-### DNA chains
+### DNA 链
 
-Please note that the `dnaSequence` type refers to single stranded DNA. If you
-wish to model double stranded DNA, please add a second `"dnaSequence`", carrying
-the sequence of the reverse complement strand.
+请注意，`dnaSequence` 类型指的是单链 DNA。如果你希望建模双链 DNA，请再添加一个 `"dnaSequence"`，并填写互补链的反向互补序列。
 
-`sequence` is a string containing a DNA sequence; the same limitations as in the
-UI are in place, i.e. only letters A, T, G, C are allowed.
+`sequence` 是 DNA 序列字符串；限制条件与界面一致，即只允许字母 A、T、G、C。
 
-`count` is a number of copies of this DNA chain (integer).
+`count` 是该 DNA 链的拷贝数量（整数）。
 
-`modifications` is an optional list of dictionaries that carries descriptions of
-the DNA chemical modifications.
+`modifications` 是一个可选字典列表，用于描述 DNA 的化学修饰。
 
-*   `modificationType` is a string containing
-    [CCD code](https://www.wwpdb.org/data/ccd) of modification; the same codes
-    are allowed as in the UI.
-*   `basePosition` is a position of the modified nucleotide (integer).
-*   Allowed modifications: `CCD_5CM`, `CCD_C34`, `CCD_5HC`, `CCD_6OG`,
-    `CCD_6MA`, `CCD_1CC`, `CCD_8OG`, `CCD_5FC`, `CCD_3DR`
+*   `modificationType`：字符串，表示修饰对应的 [CCD 代码](https://www.wwpdb.org/data/ccd)；允许的代码与界面一致。
+*   `basePosition`：被修饰核苷酸的位置（整数）。
+*   允许的修饰：`CCD_5CM`、`CCD_C34`、`CCD_5HC`、`CCD_6OG`、`CCD_6MA`、`CCD_1CC`、`CCD_8OG`、`CCD_5FC`、`CCD_3DR`
 
 ```json
 {
@@ -196,29 +147,22 @@ the DNA chemical modifications.
 }
 ```
 
-### RNA chains
+### RNA 链
 
-`sequence` is a string containing RNA sequence (single strand); the same
-limitations as in the UI are in place, e.g. only letters A, U, G, C are allowed.
+`sequence` 是 RNA 序列字符串（单链）；限制条件与界面一致，例如只允许字母 A、U、G、C。
 
-`count` is a number of copies of this RNA chain (integer).
+`count` 是该 RNA 链的拷贝数量（整数）。
 
-`modifications` is an optional list of dictionaries that carries descriptions of
-the RNA chemical modifications.
+`modifications` 是一个可选字典列表，用于描述 RNA 的化学修饰。
 
-*   `modificationType` is a string containing
-    [CCD code](https://www.wwpdb.org/data/ccd) of modification; the same codes
-    are allowed as in the UI.
-*   `basePosition` is a position of the modified nucleotide (integer).
-*   Allowed modifications: `CCD_PSU`, `CCD_5MC`, `CCD_OMC`, `CCD_4OC`,
-    `CCD_5MU`, `CCD_OMU`, `CCD_UR3`, `CCD_A2M`, `CCD_MA6`, `CCD_6MZ`, `CCD_2MG`,
-    `CCD_OMG`, `CCD_7MG`, `CCD_RSQ`
+*   `modificationType`：字符串，表示修饰对应的 [CCD 代码](https://www.wwpdb.org/data/ccd)；允许的代码与界面一致。
+*   `basePosition`：被修饰核苷酸的位置（整数）。
+*   允许的修饰：`CCD_PSU`、`CCD_5MC`、`CCD_OMC`、`CCD_4OC`、`CCD_5MU`、`CCD_OMU`、`CCD_UR3`、`CCD_A2M`、`CCD_MA6`、`CCD_6MZ`、`CCD_2MG`、`CCD_OMG`、`CCD_7MG`、`CCD_RSQ`
 
 ```json
 {
   "rnaSequence": {
     "sequence": "GUAC",
-
     "modifications": [
       {
         "modificationType": "CCD_2MG",
@@ -229,22 +173,18 @@ the RNA chemical modifications.
         "basePosition": 4
       }
     ],
-
     "count": 1
   }
 }
 ```
 
-### Ligands
+### 配体
 
-`ligand` is a string containing the [CCD code](https://www.wwpdb.org/data/ccd)
-of the ligand; the same codes are allowed as in the UI.
+`ligand` 是一个字符串，表示该配体的 [CCD 代码](https://www.wwpdb.org/data/ccd)；允许的代码与界面中一致。
 
-`count` is the number of copies of this ligand (integer).
+`count` 是该配体的拷贝数量（整数）。
 
-Allowed ligands: `CCD_ADP`, `CCD_ATP`, `CCD_AMP`, `CCD_GTP`, `CCD_GDP`,
-`CCD_FAD`, `CCD_NAD`, `CCD_NAP`, `CCD_NDP`, `CCD_HEM`, `CCD_HEC`, `CCD_PLM`,
-`CCD_OLA`, `CCD_MYR`, `CCD_CIT`, `CCD_CLA`, `CCD_CHL`, `CCD_BCL`, `CCD_BCB`
+允许的配体包括：`CCD_ADP`、`CCD_ATP`、`CCD_AMP`、`CCD_GTP`、`CCD_GDP`、`CCD_FAD`、`CCD_NAD`、`CCD_NAP`、`CCD_NDP`、`CCD_HEM`、`CCD_HEC`、`CCD_PLM`、`CCD_OLA`、`CCD_MYR`、`CCD_CIT`、`CCD_CLA`、`CCD_CHL`、`CCD_BCL`、`CCD_BCB`
 
 ```json
 {
@@ -261,15 +201,13 @@ Allowed ligands: `CCD_ADP`, `CCD_ATP`, `CCD_AMP`, `CCD_GTP`, `CCD_GDP`,
 }
 ```
 
-### Ions
+### 离子
 
-`ion` is a string containing [CCD code](https://www.wwpdb.org/data/ccd) of the
-ion; the same codes are allowed as in the UI. The ion charge is implicitly
-specified by the CCD code.
+`ion` 是一个字符串，表示该离子的 [CCD 代码](https://www.wwpdb.org/data/ccd)；允许的代码与界面中一致。离子的电荷由 CCD 代码隐式指定。
 
-`count` is a number of copies of this ion (integer).
+`count` 是该离子的拷贝数量（整数）。
 
-Allowed ions: `MG`, `ZN`, `CL`, `CA`, `NA`, `MN`, `K`, `FE`, `CU`, `CO`
+允许的离子包括：`MG`、`ZN`、`CL`、`CA`、`NA`、`MN`、`K`、`FE`、`CU`、`CO`
 
 ```json
 {
@@ -286,15 +224,13 @@ Allowed ions: `MG`, `ZN`, `CL`, `CA`, `NA`, `MN`, `K`, `FE`, `CU`, `CO`
 }
 ```
 
-# Additional modeling jobs
+# 其他建模任务
 
-You may specify multiple jobs in one JSON file. This is an example of a simple
-job request for one protein chain and two copies of the palindromic DNA
-sequence:
+你可以在一个 JSON 文件中定义多个作业。下面是一个简单示例：一个蛋白链以及两份回文 DNA 序列的作业请求：
 
 ```json
 {
-  "name": "Test Fold Job Number Two",
+  "name": "测试折叠任务二",
   "modelSeeds": [],
   "sequences": [
     {

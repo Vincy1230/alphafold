@@ -20,7 +20,7 @@ build-backend = "setuptools.build_meta"
 name = "alphafold"
 dynamic = ["version"]
 requires-python = ">=3.8"
-description = "An implementation of the inference pipeline of AlphaFold v2.0. This is a completely new model that was entered as AlphaFold2 in CASP14 and published in Nature."
+description = "AlphaFold v2.0 推理流水线的实现。该模型即在 CASP14 中以 AlphaFold2 参赛并发表于 Nature 的全新模型。"
 authors = [
     {name = "DeepMind", email = "alphafold@deepmind.com"},
 ]

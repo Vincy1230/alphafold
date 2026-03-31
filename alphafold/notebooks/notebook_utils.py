@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Helper methods for the AlphaFold Colab notebook."""
+"""AlphaFold Colab 笔记本的辅助方法。"""
 from typing import AbstractSet, Any, Mapping, Optional, Sequence
 
 from alphafold.common import residue_constants
@@ -24,7 +24,7 @@ import numpy as np
 def clean_and_validate_single_sequence(
     input_sequence: str, min_length: int, max_length: int
 ) -> str:
-  """Checks that the input sequence is ok and returns a clean version of it."""
+  """检查输入序列是否有效，并返回清洗后的版本。"""
   # Remove all whitespaces, tabs and end lines; upper-case.
   clean_sequence = input_sequence.translate(
       str.maketrans('', '', ' \n\t')
@@ -32,21 +32,19 @@ def clean_and_validate_single_sequence(
   aatypes = set(residue_constants.restypes)  # 20 standard aatypes.
   if not set(clean_sequence).issubset(aatypes):
     raise ValueError(
-        'Input sequence contains non-amino acid letters: '
-        f'{set(clean_sequence) - aatypes}. AlphaFold only supports 20 standard '
-        'amino acids as inputs.'
+        '输入序列包含非氨基酸字母：'
+        f'{set(clean_sequence) - aatypes}。AlphaFold 仅支持 20 种标准氨基酸作为输入。'
     )
   if len(clean_sequence) < min_length:
     raise ValueError(
-        f'Input sequence is too short: {len(clean_sequence)} amino acids, '
-        f'while the minimum is {min_length}'
+        f'输入序列过短：当前为 {len(clean_sequence)} 个氨基酸，'
+        f'最小长度要求为 {min_length}'
     )
   if len(clean_sequence) > max_length:
     raise ValueError(
-        f'Input sequence is too long: {len(clean_sequence)} amino acids, while '
-        f'the maximum is {max_length}. You may be able to run it with the full '
-        'AlphaFold system depending on your resources (system memory, '
-        'GPU memory).'
+        f'输入序列过长：当前为 {len(clean_sequence)} 个氨基酸，'
+        f'最大允许长度为 {max_length}。视你的资源情况'
+        '（系统内存、GPU 显存）而定，可能可以改用完整 AlphaFold 系统运行。'
     )
   return clean_sequence
 
@@ -56,7 +54,7 @@ def clean_and_validate_input_sequences(
     min_sequence_length: int,
     max_sequence_length: int,
 ) -> Sequence[str]:
-  """Validates and cleans input sequences."""
+  """校验并清洗输入序列。"""
   sequences = []
 
   for input_sequence in input_sequences:
@@ -72,15 +70,14 @@ def clean_and_validate_input_sequences(
     return sequences
   else:
     raise ValueError(
-        'No input amino acid sequence provided, please provide at '
-        'least one sequence.'
+        '未提供任何输入氨基酸序列，请至少提供一条序列。'
     )
 
 
 def merge_chunked_msa(
     results: Sequence[Mapping[str, Any]], max_hits: Optional[int] = None
 ) -> parsers.Msa:
-  """Merges chunked database hits together into hits for the full database."""
+  """将分块数据库命中的结果合并为完整数据库的命中结果。"""
   unsorted_results = []
   for chunk_index, chunk in enumerate(results):
     msa = parsers.parse_stockholm(chunk['sto'])
@@ -91,7 +88,7 @@ def merge_chunked_msa(
         msa.sequences, msa.deletion_matrix, msa.descriptions, e_values
     )
     if chunk_index != 0:
-      next(chunk_results)  # Only take query (first hit) from the first chunk.
+      next(chunk_results)  # 只从第一个分块中保留查询序列（第一个命中）。
     unsorted_results.extend(chunk_results)
 
   sorted_by_evalue = sorted(unsorted_results, key=lambda x: x[-1])
@@ -112,7 +109,7 @@ def merge_chunked_msa(
 def show_msa_info(
     single_chain_msas: Sequence[parsers.Msa], sequence_index: int
 ):
-  """Prints info and shows a plot of the deduplicated single chain MSA."""
+  """打印信息并展示去重后的单链 MSA 图。"""
   full_single_chain_msa = []
   for single_chain_msa in single_chain_msas:
     full_single_chain_msa.extend(single_chain_msa.sequences)
@@ -121,8 +118,7 @@ def show_msa_info(
   deduped_full_single_chain_msa = list(dict.fromkeys(full_single_chain_msa))
   total_msa_size = len(deduped_full_single_chain_msa)
   print(
-      f'\n{total_msa_size} unique sequences found in total for sequence '
-      f'{sequence_index}\n'
+      f'\n序列 {sequence_index} 总共找到 {total_msa_size} 条唯一序列\n'
   )
 
   aa_map = {res: i for i, res in enumerate('ABCDEFGHIJKLMNOPQRSTUVWXYZ-')}
@@ -132,11 +128,10 @@ def show_msa_info(
 
   plt.figure(figsize=(12, 3))
   plt.title(
-      'Per-Residue Count of Non-Gap Amino Acids in the MSA for Sequence '
-      f'{sequence_index}'
+      f'序列 {sequence_index} 的 MSA 中各残基位置非缺口氨基酸计数'
   )
   plt.plot(np.sum(msa_arr != aa_map['-'], axis=0), color='black')
-  plt.ylabel('Non-Gap Count')
+  plt.ylabel('非缺口计数')
   plt.yticks(range(0, total_msa_size + 1, max(1, int(total_msa_size / 3))))
   plt.show()
 
@@ -170,21 +165,20 @@ def empty_placeholder_template_features(
 def check_cell_execution_order(
     cells_ran: AbstractSet[int], cell_number: int
 ) -> None:
-  """Check that the cell execution order is correct.
+  """检查单元格执行顺序是否正确。
 
   Args:
-    cells_ran: Set of cell numbers that have been executed.
-    cell_number: The number of the cell that this check is called in.
+    cells_ran: 已执行单元格编号的集合。
+    cell_number: 调用本检查时所在的单元格编号。
 
   Raises:
-    If <1:cell_number> cells haven't been executed, raise error.
+    如果 <1:cell_number> 范围内有单元格未执行，则抛出错误。
   """
   previous_cells = set(range(1, cell_number))
   cells_not_ran = previous_cells - cells_ran
   if cells_not_ran != set():
     cells_not_ran_str = ', '.join([str(x) for x in sorted(cells_not_ran)])
     raise ValueError(
-        f'You did not execute the cells: {cells_not_ran_str}. Your Colab '
-        'runtime may have died during execution. Please restart the runtime '
-        'and run from the first cell!'
+        f'你尚未执行以下单元格：{cells_not_ran_str}。你的 Colab '
+        '运行时可能在执行过程中中断了。请重启运行时并从第一个单元格重新运行！'
     )

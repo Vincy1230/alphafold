@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Fixture for pytest.
+"""pytest 固件。
 
-This is needed to parse the absl flags before running the test.
+该固件用于在运行测试前解析 absl flags。
 """
 
 import sys
@@ -26,5 +26,5 @@ import pytest
 @pytest.fixture(scope="session", autouse=True)
 def initialize_absl_flags(request):
   del request
-  # Parse any flags that make sense to absl as absl flags.
+  # 将命令行中 absl 可识别的参数解析为 absl flags。
   flags.FLAGS(sys.argv, known_only=True)

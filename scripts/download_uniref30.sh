@@ -14,24 +14,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Downloads and unzips the Uniclust30 database for AlphaFold.
+# 下载并解压 AlphaFold 所需的 Uniclust30 数据库。
 #
-# Usage: bash download_uniclust30.sh /path/to/download/directory
+# 用法：bash download_uniclust30.sh /path/to/download/directory
 set -e
 
 if [[ $# -eq 0 ]]; then
-    echo "Error: download directory must be provided as an input argument."
+    echo "错误：必须提供下载目录作为输入参数。"
     exit 1
 fi
 
 if ! command -v aria2c &> /dev/null ; then
-    echo "Error: aria2c could not be found. Please install aria2c (sudo apt install aria2)."
+    echo "错误：找不到 aria2c。请先安装 aria2c（sudo apt install aria2）。"
     exit 1
 fi
 
 DOWNLOAD_DIR="$(realpath "$1")"
 ROOT_DIR="${DOWNLOAD_DIR}/uniref30"
-# Mirror of:
+# 镜像来源：
 # https://wwwuser.gwdg.de/~compbiol/uniclust/2021_03/UniRef30_2021_03.tar.gz
 SOURCE_URL="https://storage.googleapis.com/alphafold-databases/v2.3/UniRef30_2021_03.tar.gz"
 BASENAME=$(basename "${SOURCE_URL}")

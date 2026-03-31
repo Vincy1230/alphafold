@@ -14,23 +14,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Downloads, unzips and flattens the PDB database for AlphaFold.
+# 下载、解压并展平 AlphaFold 所需的 PDB 数据库。
 #
-# Usage: bash download_pdb_mmcif.sh /path/to/download/directory
+# 用法：bash download_pdb_mmcif.sh /path/to/download/directory
 set -e
 
 if [[ $# -eq 0 ]]; then
-    echo "Error: download directory must be provided as an input argument."
+    echo "错误：必须提供下载目录作为输入参数。"
     exit 1
 fi
 
 if ! command -v aria2c &> /dev/null ; then
-    echo "Error: aria2c could not be found. Please install aria2c (sudo apt install aria2)."
+    echo "错误：找不到 aria2c。请先安装 aria2c（sudo apt install aria2）。"
     exit 1
 fi
 
 if ! command -v rsync &> /dev/null ; then
-    echo "Error: rsync could not be found. Please install rsync."
+    echo "错误：找不到 rsync。请先安装 rsync。"
     exit 1
 fi
 
@@ -39,17 +39,17 @@ ROOT_DIR="${DOWNLOAD_DIR}/pdb_mmcif"
 RAW_DIR="${ROOT_DIR}/raw"
 MMCIF_DIR="${ROOT_DIR}/mmcif_files"
 
-echo "Running rsync to fetch all mmCIF files (note that the rsync progress estimate might be inaccurate)..."
-echo "If the download speed is too slow, try changing the mirror to:"
-echo "  * rsync.ebi.ac.uk::pub/databases/pdb/data/structures/divided/mmCIF/ (Europe)"
-echo "  * ftp.pdbj.org::ftp_data/structures/divided/mmCIF/ (Asia)"
-echo "or see https://www.wwpdb.org/ftp/pdb-ftp-sites for more download options."
+echo "正在运行 rsync 获取全部 mmCIF 文件（请注意，rsync 的进度估算可能并不准确）..."
+echo "如果下载速度过慢，可以尝试改用以下镜像："
+echo "  * rsync.ebi.ac.uk::pub/databases/pdb/data/structures/divided/mmCIF/（欧洲）"
+echo "  * ftp.pdbj.org::ftp_data/structures/divided/mmCIF/（亚洲）"
+echo "或者参见 https://www.wwpdb.org/ftp/pdb-ftp-sites 获取更多下载选项。"
 mkdir --parents "${RAW_DIR}"
 rsync --recursive --links --perms --times --compress --info=progress2 --delete --port=33444 \
   rsync.rcsb.org::ftp_data/structures/divided/mmCIF/ \
   "${RAW_DIR}"
 
-echo "Unzipping all mmCIF files..."
+echo "正在解压全部 mmCIF 文件..."
 if command -v parallel >/dev/null 2>&1
 then
    find "${RAW_DIR}/" -type f -iname "*.gz" -print0 | parallel -0 -j -1 --xargs gunzip
@@ -57,14 +57,14 @@ else
    find "${RAW_DIR}/" -type f -iname "*.gz" -exec gunzip {} +
 fi
 
-echo "Flattening all mmCIF files..."
+echo "正在展平全部 mmCIF 文件..."
 mkdir --parents "${MMCIF_DIR}"
-find "${RAW_DIR}" -type d -empty -delete  # Delete empty directories.
+find "${RAW_DIR}" -type d -empty -delete  # 删除空目录。
 for subdir in "${RAW_DIR}"/*; do
   mv "${subdir}/"*.cif "${MMCIF_DIR}"
 done
 
-# Delete empty download directory structure.
+# 删除空的下载目录结构。
 find "${RAW_DIR}" -type d -empty -delete
 
 aria2c "https://files.wwpdb.org/pub/pdb/data/status/obsolete.dat" --dir="${ROOT_DIR}"

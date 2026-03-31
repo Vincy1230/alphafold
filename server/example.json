@@ -1,6 +1,6 @@
 [
   {
-    "name": "Test Fold Job Number One",
+    "name": "测试折叠任务一",
     "modelSeeds": [],
     "sequences": [
       {
@@ -104,7 +104,7 @@
     "version": 1
   },
   {
-    "name": "Test Fold Job Number Two",
+    "name": "测试折叠任务二",
     "modelSeeds": [],
     "sequences": [
       {

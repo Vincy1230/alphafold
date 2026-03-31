@@ -126,7 +126,7 @@ class RunAlphafoldTest(parameterized.TestCase):
       )
     self.assertCountEqual(expected_files, target_output_files)
 
-    # Check that pLDDT is set in the B-factor column.
+    # 检查 pLDDT 是否写入了 B-factor 列。
     with open(os.path.join(out_dir, 'test', 'unrelaxed_model1.pdb')) as f:
       for line in f:
         if line.startswith('ATOM'):

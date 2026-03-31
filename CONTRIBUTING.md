@@ -1,23 +1,13 @@
-# How to Contribute
+# 如何参与贡献
 
-We welcome small patches related to bug fixes and documentation, but we do not
-plan to make any major changes to this repository.
+我们欢迎与缺陷修复和文档相关的小型补丁，但目前没有计划对本仓库进行重大改动。
 
-## Contributor License Agreement
+## 贡献者许可协议
 
-Contributions to this project must be accompanied by a Contributor License
-Agreement. You (or your employer) retain the copyright to your contribution,
-this simply gives us permission to use and redistribute your contributions as
-part of the project. Head over to <https://cla.developers.google.com/> to see
-your current agreements on file or to sign a new one.
+向本项目提交贡献时，必须同时签署贡献者许可协议（Contributor License Agreement，CLA）。你（或你的雇主）仍然保留对所提交内容的版权；该协议只是授予我们将你的贡献作为项目一部分进行使用和再分发的权限。请访问 <https://cla.developers.google.com/> 查看你当前已签署的协议，或签署新的协议。
 
-You generally only need to submit a CLA once, so if you've already submitted one
-(even if it was for a different project), you probably don't need to do it
-again.
+通常你只需要提交一次 CLA，因此如果你以前已经提交过（即使是针对其他项目），大概率无需再次提交。
 
-## Code reviews
+## 代码评审
 
-All submissions, including submissions by project members, require review. We
-use GitHub pull requests for this purpose. Consult
-[GitHub Help](https://help.github.com/articles/about-pull-requests/) for more
-information on using pull requests.
+所有提交都需要经过评审，包括项目成员自己的提交。我们通过 GitHub Pull Request 来完成这项工作。有关如何使用 Pull Request 的更多信息，请参阅 [GitHub 帮助](https://help.github.com/articles/about-pull-requests/)。
