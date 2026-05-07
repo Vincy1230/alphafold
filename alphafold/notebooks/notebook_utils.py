@@ -126,6 +126,7 @@ def show_msa_info(
       [[aa_map[aa] for aa in seq] for seq in deduped_full_single_chain_msa]
   )
 
+  plt.rcParams['font.sans-serif'] = ['SimHei']
   plt.figure(figsize=(12, 3))
   plt.title(
       f'序列 {sequence_index} 的 MSA 中各残基位置非缺口氨基酸计数'
